@@ -383,7 +383,7 @@
       <p>Rocky spots have boulders. Wade out and climb for better water — waves can shove you back or knock you off.</p>
       <p>Wind piles seaweed onto the onshore side. A fouled lure catches nothing. Change type (1–4) and color ([ ]) until something eats. Nothing is guaranteed.</p>
       <p>When you hook up, pump the rod with SPACE. Too much heat snaps the line. Too little and a shark or seal may steal the bass. Points count only when you LAND the fish. Then you let it go.</p>
-      <p>A trip is 6 hours. One real minute is one game hour. Click a map marker to hike the coast (hiking costs time).</p>
+      <p>A trip is 6 hours. Two real minutes is one game hour. Click a map marker to hike the coast (hiking costs time).</p>
       <p style="margin-top:12px"><button class="pixel-btn" id="btn-help-close">GOT IT</button></p>
     </div>
   </div>
@@ -392,6 +392,9 @@
   (() => {
     const MAP_W = 1100, MAP_H = 850;
     const SURF_W = 320, SURF_H = 180;
+    const TRIP_GAME_HOURS = 6;
+    const REAL_SECONDS_PER_GAME_HOUR = 120; // 2 real minutes = 1 game hour
+    const GAME_MIN_PER_REAL_SEC = 60 / REAL_SECONDS_PER_GAME_HOUR;
     const MONTHS = [
       { id: 4, name: "APRIL" }, { id: 5, name: "MAY" }, { id: 6, name: "JUNE" },
       { id: 7, name: "JULY" }, { id: 8, name: "AUGUST" }, { id: 9, name: "SEPTEMBER" },
@@ -487,7 +490,7 @@
       startHour: 18,
       hour: 18,
       elapsedMin: 0,
-      tripMin: 360,
+      tripMin: TRIP_GAME_HOURS * 60,
       lastTs: 0,
       paused: false,
       score: 0,
@@ -1022,7 +1025,7 @@
 
     function update(dt) {
       if (G.mode !== "game" || G.paused) return;
-      G.elapsedMin += dt * 60;
+      G.elapsedMin += dt * GAME_MIN_PER_REAL_SEC;
       G.hour = G.startHour + G.elapsedMin / 60;
       if (G.elapsedMin >= G.tripMin) {
         endTrip();

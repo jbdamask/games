@@ -796,6 +796,8 @@
       return clamp(s, 0.4, 4.2);
     }
 
+    function currentSpot() { return SPOTS[G.spotIndex]; }
+
     function playerName() {
       return (G.playerName || "SURF RAT").toUpperCase();
     }

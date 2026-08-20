@@ -631,7 +631,7 @@
     const ALIEN_BASS_INCH = 50;
     const ALIEN_BASS_CATCH_CHANCE = 0.18;
     const ALIEN_MSG =
-      "We come in peace. Please don't tell anybody we've dropped 10 50 lb. stripers in the area.";
+      "We come in peace. Please don't tell anybody, m'kay? Here are some 50 lb stripers to sweeten the deal.";
     const TRIP_GAME_HOURS = 6;
     const REAL_SECONDS_PER_GAME_HOUR = 120; // 2 real minutes = 1 game hour
     const GAME_MIN_PER_REAL_SEC = 60 / REAL_SECONDS_PER_GAME_HOUR;
@@ -1653,10 +1653,9 @@
         return;
       }
       if (u.phase === "beam") {
-        if (u.rngDrop == null) u.rngDrop = 0;
-        u.rngDrop += dt;
-        while (u.rngDrop >= 0.12) {
-          u.rngDrop -= 0.12;
+        u.sparkT = (u.sparkT || 0) + dt;
+        while (u.sparkT >= 0.12) {
+          u.sparkT -= 0.12;
           G.particles.push({
             x: 158 + G.rng() * 8,
             y: 34 + G.rng() * 6,

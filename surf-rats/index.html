@@ -533,8 +533,8 @@
       <p>Walk the shore map and pick a spot, then hit FISH HERE. Gold B on the map is Montauk Bill. You cannot fish his hole. Talk to him — he may give you a tip — then he leaves.</p>
       <p>ARROWS / WASD move. UP wades out. DOWN comes in. SPACE casts, works the lure, climbs a boulder, or pumps a fish.</p>
       <p>Rocky spots have boulders. Wade out and climb. Waves shove you back. Stand too far back on the rock or too far out on a pointy peak and a big one can wash you off — lose the fish if you're still hooked up.</p>
-      <p>You carry a small box. Montauk eats plugs. Fish the rocks careless and you leave hardware in them.</p>
-      <p>Work each lure right or it is just swimming. POPPER: shake it on top (tap SPACE). DARTER: reel, and tap UP every other turn. MINNOW: slow and steady (hold SPACE). BUCKTAIL: low and slow, lift the rod now and then so it does not hang in the boulders.</p>
+      <p>You carry a small box. Montauk eats plugs. Fish the rocks careless and you leave hardware in them. Leave a lure out without reeling and it will hang up.</p>
+      <p>Each lure casts a different distance: BUCKTAIL shortest, DARTER a bit farther, MINNOW farther, POPPER farthest. POPPER: shake it on top (tap SPACE). DARTER: reel, and tap UP every other turn. MINNOW: slow and steady (hold SPACE). BUCKTAIL: low and slow, lift the rod now and then so it does not hang in the boulders.</p>
       <p>Wind piles seaweed onto the onshore side. A fouled lure catches nothing. Change type (1–4) and color ([ ]) until something eats.</p>
       <p>When you hook up, pump the rod with SPACE. Too much heat snaps the line. Too little and a shark or seal may steal the bass. Points count only when you LAND the fish. Then you let it go.</p>
       <p>A trip is 6 hours. Two real minutes is one game hour. Click a map marker to hike the coast (hiking costs time).</p>
@@ -574,6 +574,7 @@
     const LURES = ["BUCKTAIL", "PENCIL POPPER", "DARTER", "MINNOW"];
     const STARTER_BOX = { BUCKTAIL: 3, "PENCIL POPPER": 2, DARTER: 2, MINNOW: 2 };
     const LURE_SHORT = { BUCKTAIL: "BUCK", "PENCIL POPPER": "PENCIL", DARTER: "DARTER", MINNOW: "MINNOW" };
+    const LURE_CAST = { BUCKTAIL: -8, DARTER: 10, MINNOW: 24, "PENCIL POPPER": 40 };
     const TROPHY_KEY = "surfrats-trophies";
     const PLAYER_NAMES = ["GOOGIN", "HERB", "DANGLER", "SPOTBURN"];
     const TALK_CLOSED = "bill-closed.png";
@@ -682,6 +683,7 @@
       spotIndex: 18,
       travel: null,
       bill: { x: 70, vx: 0, onRock: -1, splash: 0, frame: 0 },
+      camX: 0,
       waves: [],
       weed: [],
       lureIn: false,
@@ -1156,8 +1158,16 @@
       G.techHint = "";
     }
 
+    function surfCamTarget() {
+      const bill = G.bill;
+      if (bill.onRock >= 0) return bill.onRock * 42 + 18;
+      if (bill.x > 150) return clamp((bill.x - 150) * 0.62, 0, 88);
+      return 0;
+    }
+
     function resetBill() {
       G.bill = { x: 78, vx: 0, onRock: -1, splash: 0, frame: 0 };
+      G.camX = 0;
       G.lureIn = false;
       G.lureWeed = false;
       G.fish = null;
@@ -1322,8 +1332,8 @@
       G.lureWeed = false;
       G.wait = 0;
       resetLureWork();
-      const reach = 40 + (G.bill.onRock + 1) * 18;
-      G.lureX = G.bill.x + 18 + reach + rand(0, 16);
+      const reach = 40 + (G.bill.onRock + 1) * 18 + (LURE_CAST[G.lure] || 0) + rand(0, 12);
+      G.lureX = clamp(G.bill.x + 18 + reach, G.bill.x + 26, 392);
       G.lureY = G.lure === "PENCIL POPPER" ? 118 : G.lure === "DARTER" ? 132 : G.lure === "MINNOW" ? 128 : 138;
       beep(520, 0.05, "square", 0.04, -200);
       setTimeout(() => beep(140, 0.08, "triangle", 0.04), 180);
@@ -1641,6 +1651,22 @@
         }
       }
 
+      if (rocky && !G.snagged && speed < 8 && G.wait > 1.2) {
+        const settle = G.wait - 1.2;
+        let risk = dt * (0.05 + settle * 0.06);
+        if (G.lureY > 131) risk *= 1.55;
+        if (G.lure === "BUCKTAIL") risk *= 1.5;
+        else if (G.lure === "MINNOW") risk *= 1.1;
+        else if (G.lure === "PENCIL POPPER") risk *= 0.25;
+        if (G.rng() < risk) {
+          G.snagged = true;
+          G.snagT = 0;
+          toast("SNAGGED");
+          log("plug hung in the rocks — reel it or lose it", "warn");
+          beep(90, 0.12, "sawtooth", 0.05);
+        }
+      }
+
       G.techMul = G.lureWeed ? 0.05 : tech;
       G.techHint = G.lureWeed ? "FOULED IN WEED" : hint;
 
@@ -1675,6 +1701,7 @@
       } else {
         bill.x = clamp(bill.x, 36, 292);
       }
+      G.camX = lerp(G.camX || 0, surfCamTarget(), dt * 5);
 
       if (keys.spaceTap) {
         const near = boulderAt(bill.x);
@@ -1972,32 +1999,36 @@
       const t = performance.now() / 1000;
       const stormy = G.storm.active;
       const rain = G.storm.rain;
+      const camX = G.camX || 0;
+      const worldW = SURF_W + camX + 96;
       bctx.imageSmoothingEnabled = false;
+      bctx.save();
+      bctx.translate(-camX, 0);
       bctx.fillStyle = p.sky1;
-      bctx.fillRect(0, 0, SURF_W, SURF_H);
+      bctx.fillRect(0, 0, worldW, SURF_H);
       const g = bctx.createLinearGradient(0, 0, 0, 90);
       g.addColorStop(0, stormy ? (rain === 2 ? "#1a2438" : "#243048") : p.sky1);
       g.addColorStop(1, stormy ? (rain === 2 ? "#2a3548" : "#3a4558") : p.sky2);
       bctx.fillStyle = g;
-      bctx.fillRect(0, 0, SURF_W, 92);
-      if (rain > 0) drawRain(bctx, SURF_W, SURF_H, rain === 2, t);
+      bctx.fillRect(0, 0, worldW, 92);
+      if (rain > 0) drawRain(bctx, worldW, SURF_H, rain === 2, t);
       if (p.night) {
         for (let i = 0; i < 18; i++) {
-          const sx = (i * 47 + 13) % SURF_W;
+          const sx = (i * 47 + 13) % worldW;
           const sy = (i * 19) % 70;
           pix(bctx, sx, sy, 1, 1, "#e8e8d0");
         }
-        pix(bctx, 260, 22, 10, 10, p.sun);
+        pix(bctx, 260 + camX * 0.35, 22, 10, 10, p.sun);
       } else {
-        pix(bctx, 250, 18, 16, 16, p.sun);
+        pix(bctx, 250 + camX * 0.35, 18, 16, 16, p.sun);
       }
 
-      pix(bctx, 0, 88, SURF_W, 70, p.water);
+      pix(bctx, 0, 88, worldW, 70, p.water);
       for (let i = 0; i < 8; i++) {
         const y = 92 + i * 8;
         const ox = Math.sin(t * (1.2 + i * 0.15) + i) * 10;
         bctx.fillStyle = i % 2 ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
-        bctx.fillRect(ox, y, SURF_W, 3);
+        bctx.fillRect(ox, y, worldW, 3);
       }
       G.waves.forEach((w) => {
         pix(bctx, w.x, 100, w.w, 8, "#d8f0ee");
@@ -2043,6 +2074,7 @@
       if (G.fish) drawBass(bctx, G.fish.x, G.fish.y);
       if (G.threat) drawCreature(bctx, G.threat.x, 120, G.threat.kind);
       G.particles.forEach((pt) => pix(bctx, pt.x, pt.y, 2, 2, pt.c));
+      bctx.restore();
 
       bctx.fillStyle = "rgba(0,0,0,0.45)";
       bctx.fillRect(4, 4, 180, 22);

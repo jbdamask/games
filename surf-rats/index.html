@@ -64,6 +64,10 @@
       display: block;
       margin: 8px 0 4px;
     }
+    .title-head {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
     .title-tagline {
       color: var(--foam);
       font-size: clamp(9px, 2.4vw, 13px);
@@ -166,6 +170,20 @@
       color: var(--foam);
       margin: 8px 0 16px;
     }
+    .name-input {
+      width: 100%;
+      max-width: 360px;
+      background: #101628;
+      color: var(--gold);
+      border: 3px solid #000;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      box-shadow: 4px 4px 0 #000;
+    }
+    .name-input:focus { outline: 2px solid var(--gold); }
 
     /* GAME */
     #hud {
@@ -333,6 +351,53 @@
       line-height: 1.9;
     }
     .help h3 { color: var(--gold); margin-bottom: 10px; font-size: 10px; }
+
+    #talk {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.82);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+      padding: 16px;
+    }
+    #talk.on { display: flex; }
+    .talk-box {
+      background: var(--panel);
+      border: 4px solid #000;
+      box-shadow: 8px 8px 0 #000;
+      width: min(520px, 94vw);
+      padding: 14px;
+      text-align: center;
+    }
+    .talk-box h3 { color: var(--gold); font-size: 10px; margin-bottom: 10px; letter-spacing: 1px; }
+    #talk-face {
+      width: min(220px, 58vw);
+      height: auto;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      border: 4px solid #000;
+      box-shadow: 4px 4px 0 #000;
+      background: #000;
+      display: block;
+      margin: 0 auto 12px;
+    }
+    #talk-text {
+      min-height: 88px;
+      background: #101628;
+      border: 3px solid #000;
+      padding: 10px;
+      font-size: 8px;
+      line-height: 1.9;
+      color: var(--foam);
+      text-align: left;
+    }
+    #talk-cont {
+      color: var(--dim);
+      font-size: 7px;
+      margin: 10px 0 0;
+    }
   </style>
 </head>
 <body>
@@ -358,6 +423,10 @@
       <div class="setup-card">
         <h2>PLAN THE TRIP</h2>
         <div class="field">
+          <label>YOUR NAME</label>
+          <input id="name-input" class="name-input" type="text" maxlength="12" autocomplete="off" spellcheck="false" placeholder="SURF RAT" />
+        </div>
+        <div class="field">
           <label>MONTH</label>
           <div class="chip-row" id="month-row"></div>
         </div>
@@ -376,7 +445,7 @@
         <div class="forecast" id="forecast"></div>
         <div class="row">
           <button class="pixel-btn ghost" id="btn-back-title">BACK</button>
-          <button class="pixel-btn" id="btn-launch">LAUNCH BILL</button>
+          <button class="pixel-btn" id="btn-launch">LAUNCH TRIP</button>
         </div>
       </div>
     </section>
@@ -409,6 +478,7 @@
           <div id="log"></div>
           <div class="row" style="margin-top:10px">
             <button class="pixel-btn small" id="btn-fish">FISH HERE</button>
+            <button class="pixel-btn small" id="btn-talk" style="display:none">TALK TO BILL</button>
             <button class="pixel-btn small ghost" id="btn-map">MAP</button>
             <button class="pixel-btn small ghost" id="btn-case">CASE</button>
             <button class="pixel-btn small ghost" id="btn-pause">PAUSE</button>
@@ -453,7 +523,8 @@
   <div class="help" id="help">
     <div class="box">
       <h3>HOW TO FISH MONTAUK</h3>
-      <p>You are BILL. Walk the shore map and pick a spot, then hit FISH HERE.</p>
+      <p>You type your name. Montauk Bill already knows every hole. Outfish him before the trip clock dies.</p>
+      <p>Walk the shore map and pick a spot, then hit FISH HERE. Gold B on the map is Montauk Bill. You cannot fish his hole. Talk to him — he may give you a tip — then he leaves.</p>
       <p>ARROWS / WASD move. UP wades out. DOWN comes in. SPACE casts, works the lure, climbs a boulder, or pumps a fish.</p>
       <p>Rocky spots have boulders. Wade out and climb. Waves shove you back. Stand too far back on the rock or too far out on a pointy peak and a big one can wash you off — lose the fish if you're still hooked up.</p>
       <p>You carry a small box. Montauk eats plugs. Fish the rocks careless and you leave hardware in them.</p>
@@ -462,6 +533,15 @@
       <p>When you hook up, pump the rod with SPACE. Too much heat snaps the line. Too little and a shark or seal may steal the bass. Points count only when you LAND the fish. Then you let it go.</p>
       <p>A trip is 6 hours. Two real minutes is one game hour. Click a map marker to hike the coast (hiking costs time).</p>
       <p style="margin-top:12px"><button class="pixel-btn" id="btn-help-close">GOT IT</button></p>
+    </div>
+  </div>
+
+  <div id="talk">
+    <div class="talk-box">
+      <h3>MONTAUK BILL</h3>
+      <img id="talk-face" src="bill-closed.png" alt="Montauk Bill" width="420" height="524" />
+      <div id="talk-text"></div>
+      <p id="talk-cont" class="blink">PRESS SPACE / CLICK</p>
     </div>
   </div>
 
@@ -487,6 +567,9 @@
     const STARTER_BOX = { BUCKTAIL: 3, "PENCIL POPPER": 2, DARTER: 2, MINNOW: 2 };
     const LURE_SHORT = { BUCKTAIL: "BUCK", "PENCIL POPPER": "PENCIL", DARTER: "DARTER", MINNOW: "MINNOW" };
     const TROPHY_KEY = "surfrats-trophies";
+    const NAME_KEY = "surfrats-name";
+    const TALK_CLOSED = "bill-closed.png";
+    const TALK_OPEN = "bill-open.png";
     const COLORS = [
       { id: "white", name: "WHITE", hex: "#f2f0e6" },
       { id: "yellow", name: "YELLOW", hex: "#f0d83a" },
@@ -548,11 +631,16 @@
     const bctx = buf.getContext("2d");
     const mapImg = new Image();
     mapImg.src = "montauk-map.jpg";
+    const billClosedImg = new Image();
+    billClosedImg.src = TALK_CLOSED;
+    const billOpenImg = new Image();
+    billOpenImg.src = TALK_OPEN;
 
     const keys = Object.create(null);
     const audio = { ctx: null, muted: false };
 
     const setup = {
+      name: "SURF RAT",
       month: 10,
       timeId: "dusk",
       lure: "BUCKTAIL",
@@ -617,7 +705,14 @@
       mapHover: -1,
       weatherSlot: 0,
       boulders: [],
-      upHeld: false
+      upHeld: false,
+      playerName: "SURF RAT",
+      rival: { spot: -1, score: 0, landed: 0, biggest: 0, nextMove: 50, nextCatch: 22, talks: 0 },
+      talking: false,
+      talkFull: "",
+      talkShown: 0,
+      talkT: 0,
+      talkDone: false
     };
 
     function mulberry(seed) {
@@ -701,7 +796,135 @@
       return clamp(s, 0.4, 4.2);
     }
 
-    function currentSpot() { return SPOTS[G.spotIndex]; }
+    function playerName() {
+      return (G.playerName || "SURF RAT").toUpperCase();
+    }
+    function billHere() {
+      return G.rival && G.rival.spot === G.spotIndex;
+    }
+    function loadSavedName() {
+      try {
+        const n = (localStorage.getItem(NAME_KEY) || "").trim();
+        if (n) setup.name = n.slice(0, 12).toUpperCase();
+      } catch (e) {}
+    }
+    function saveName(n) {
+      setup.name = (n || "SURF RAT").trim().slice(0, 12).toUpperCase() || "SURF RAT";
+      try { localStorage.setItem(NAME_KEY, setup.name); } catch (e) {}
+      return setup.name;
+    }
+    function pickBillSpot(avoid) {
+      const dest = G.travel ? G.travel.path[G.travel.path.length - 1] : -1;
+      const ranked = SPOTS.map((s, i) => ({ i, q: s.q })).filter((x) => x.i !== avoid && x.i !== G.spotIndex && x.i !== dest);
+      ranked.sort((a, b) => b.q - a.q);
+      const pool = ranked.slice(0, 10);
+      return pool[Math.floor(G.rng() * pool.length)].i;
+    }
+    function billMove(reason) {
+      const next = pickBillSpot(G.rival.spot);
+      G.rival.spot = next;
+      G.rival.nextMove = G.elapsedMin + 38 + G.rng() * 36;
+      if (reason === "talk") log("Montauk Bill packed up — headed toward " + SPOTS[next].name, "warn");
+      else log("word on the beach: Bill's at " + SPOTS[next].name, "warn");
+      refreshSpotButtons();
+    }
+    function billCatch() {
+      let inch;
+      const r = G.rng();
+      if (r < 0.22) inch = irand(18, 26);
+      else if (r < 0.55) inch = irand(27, 34);
+      else if (r < 0.86) inch = irand(35, 44);
+      else inch = irand(45, 52);
+      const pts = pointsFor(inch);
+      G.rival.score += pts;
+      G.rival.landed += 1;
+      G.rival.biggest = Math.max(G.rival.biggest, inch);
+      G.rival.nextCatch = G.elapsedMin + 16 + G.rng() * 22;
+      log("Montauk Bill boxed a " + inch + "\" at " + SPOTS[G.rival.spot].name + "  +" + pts, "warn");
+    }
+    function updateRival(dt) {
+      if (G.talking || G.paused) return;
+      if (G.elapsedMin >= G.rival.nextCatch) billCatch();
+      if (G.elapsedMin >= G.rival.nextMove) billMove("roam");
+    }
+    function billTip() {
+      const tb = timeBucket(G.hour);
+      const ranked = SPOTS.map((s, i) => {
+        const pref = G.picky[i + ":" + tb];
+        let score = s.q;
+        if (pref && pref.picky) score += pref.strength * 0.2;
+        if (s.side === currentSpot().side) score += 0.08;
+        if (i === G.spotIndex) score = -99;
+        return { i, s, pref, score };
+      }).sort((a, b) => b.score - a.score);
+      const hole = ranked[0];
+      const prefHere = G.picky[G.spotIndex + ":" + tb] || hole.pref;
+      const lure = (prefHere && prefHere.lure) || "BUCKTAIL";
+      const col = COLORS.find((c) => c.id === ((prefHere && prefHere.color) || "white"));
+      const techs = {
+        BUCKTAIL: "Bucktail wants low and slow. Lift the rod now and then or you hang it in the boulders.",
+        "PENCIL POPPER": "Walk a popper on top. Tap SPACE or snap the rod UP. Don't just crank it dead.",
+        DARTER: "Darter's a two-count. Reel, then tap UP every other turn.",
+        MINNOW: "Minnow's slow and steady. Hold SPACE. Jerks kill it."
+      };
+      const n = G.rival.talks % 3;
+      if (n === 0) {
+        return "You're crowding my water, " + playerName() + ". Try " + hole.s.name + " this " + tb + ". That's where the cows slide.";
+      }
+      if (n === 1) {
+        return "If I were you I'd tie a " + (col ? col.name : "WHITE") + " " + lure + ". They're keyed on that combo right now.";
+      }
+      return techs[lure] + " And don't stand too far back on a slab — a wave will dump you and steal the fish.";
+    }
+    function startTalk() {
+      if (!billHere() || G.travel || G.fish || G.talking) return;
+      ensureAudio();
+      G.talking = true;
+      G.talkFull = billTip();
+      G.talkShown = 0;
+      G.talkT = 0;
+      G.talkDone = false;
+      G.rival.talks += 1;
+      $("talk-text").textContent = "";
+      $("talk-face").src = TALK_OPEN;
+      $("talk-cont").style.visibility = "hidden";
+      $("talk").classList.add("on");
+      beep(260, 0.06);
+    }
+    function finishTalk() {
+      if (!G.talking) return;
+      $("talk").classList.remove("on");
+      $("talk-face").src = TALK_CLOSED;
+      G.talking = false;
+      G.talkDone = false;
+      log("Bill: " + G.talkFull, "good");
+      toast("BILL LEFT THE HOLE");
+      billMove("talk");
+      refreshSpotButtons();
+    }
+    function updateTalk(dt) {
+      if (!G.talking) return;
+      if (!G.talkDone) {
+        G.talkT += dt;
+        while (G.talkShown < G.talkFull.length && G.talkT >= 0.028) {
+          G.talkT -= 0.028;
+          G.talkShown += 1;
+          if (G.talkFull[G.talkShown - 1] !== " ") beep(190 + (G.talkShown % 3) * 20, 0.018, "square", 0.02);
+        }
+        $("talk-text").textContent = G.talkFull.slice(0, G.talkShown);
+        $("talk-face").src = (Math.floor(performance.now() / 160) % 2 === 0) ? TALK_OPEN : TALK_CLOSED;
+        if (G.talkShown >= G.talkFull.length) {
+          G.talkDone = true;
+          $("talk-face").src = TALK_CLOSED;
+          $("talk-cont").style.visibility = "visible";
+        }
+      }
+    }
+    function refreshSpotButtons() {
+      const here = billHere() && !G.travel;
+      $("btn-talk").style.display = here ? "" : "none";
+      $("btn-fish").style.opacity = here ? "0.38" : "1";
+    }
 
     function rebuildPicky() {
       G.picky = {};
@@ -858,6 +1081,7 @@
     }
 
     function startTrip() {
+      G.playerName = saveName($("name-input").value);
       G.seed = (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0;
       G.rng = mulberry(G.seed);
       G.month = setup.month;
@@ -877,21 +1101,26 @@
       G.spotIndex = 18;
       G.travel = null;
       G.paused = false;
+      G.talking = false;
       G.view = "map";
       G.log = [];
       G.weatherSlot = 0;
       G.boulders = [];
+      G.rival = { spot: -1, score: 0, landed: 0, biggest: 0, nextMove: 42, nextCatch: 18, talks: 0 };
       rollWeather();
       rebuildPicky();
       resetBill();
-      log("Bill hits the rocks. Wind " + G.windDir + " " + G.windKts + ".");
-      toast("CLICK A SPOT · THEN FISH HERE");
+      G.rival.spot = pickBillSpot(-1);
+      log(playerName() + " hits the rocks. Wind " + G.windDir + " " + G.windKts + ".");
+      log("Montauk Bill is already on " + SPOTS[G.rival.spot].name + ". Outfish him.", "warn");
+      toast("OUTFISH MONTAUK BILL");
       showScreen("screen-game");
       G.mode = "game";
       G.lastTs = performance.now();
       $("btn-pause").textContent = "PAUSE";
       renderGear();
       renderLog();
+      refreshSpotButtons();
       beep(220, 0.1); beep(330, 0.14);
     }
 
@@ -906,15 +1135,21 @@
         try { localStorage.setItem("surfrats-best", String(best)); } catch (e) {}
       }
       recordTripEnd();
+      const beat = G.score > G.rival.score;
+      const tie = G.score === G.rival.score;
+      const verdict = beat
+        ? playerName() + " OUTFISHED MONTAUK BILL"
+        : (tie ? "DEAD EVEN WITH MONTAUK BILL" : "MONTAUK BILL WON THE BEACH");
       $("results-body").innerHTML =
         `${month} · ${TIMES.find((t) => t.id === setup.timeId).name}<br>` +
-        `BASS LANDED  ${G.landed}<br>` +
-        `BIGGEST  ${G.biggest ? G.biggest + '"' : "—"}<br>` +
+        `${playerName()}  LANDED ${G.landed}  ·  ${G.score} PTS<br>` +
+        `MONTAUK BILL  LANDED ${G.rival.landed}  ·  ${G.rival.score} PTS<br>` +
+        `YOUR BIGGEST  ${G.biggest ? G.biggest + '"' : "—"}   HIS  ${G.rival.biggest ? G.rival.biggest + '"' : "—"}<br>` +
         `STOLEN  ${G.stolen}   SNAPPED  ${G.snapped}<br>` +
         `LURES LOST  ${G.lostLures}   LEFT IN BOX  ${boxLeft()}<br>` +
-        `<span style="color:#e8c547">SCORE  ${G.score}</span><br>` +
+        `<span style="color:${beat ? "#6fbf73" : (tie ? "#e8c547" : "#e25b4a")}">${verdict}</span><br>` +
         `BEST  ${best}`;
-      jingle(G.landed > 0);
+      jingle(beat);
     }
 
     /* ---------- fishing math ---------- */
@@ -1075,6 +1310,7 @@
       G.lureIn = false;
       G.fish = null;
       log("hiking toward " + SPOTS[index].name);
+      refreshSpotButtons();
     }
 
     function boulderAt(x) {
@@ -1418,13 +1654,19 @@
     }
 
     function update(dt) {
-      if (G.mode !== "game" || G.paused) return;
+      if (G.mode !== "game") return;
+      if (G.talking) {
+        updateTalk(dt);
+        return;
+      }
+      if (G.paused) return;
       G.elapsedMin += dt * GAME_MIN_PER_REAL_SEC;
       G.hour = G.startHour + G.elapsedMin / 60;
       if (G.elapsedMin >= G.tripMin) {
         endTrip();
         return;
       }
+      updateRival(dt);
       const slot = Math.floor(G.elapsedMin / 75);
       if (slot > 0 && slot !== G.weatherSlot) {
         G.weatherSlot = slot;
@@ -1463,11 +1705,16 @@
           resetBill();
           log("on station: " + currentSpot().name);
           G.travel = null;
+          refreshSpotButtons();
+          if (billHere()) toast("MONTAUK BILL IS ON THIS HOLE");
         }
       } else if (G.view === "map") {
         if (keys.leftTap) hikeTo(clamp(G.spotIndex - 1, 0, SPOTS.length - 1));
         if (keys.rightTap) hikeTo(clamp(G.spotIndex + 1, 0, SPOTS.length - 1));
-        if (keys.spaceTap) $("btn-fish").click();
+        if (keys.spaceTap) {
+          if (billHere()) startTalk();
+          else $("btn-fish").click();
+        }
       }
       keys.leftTap = false;
       keys.rightTap = false;
@@ -1495,12 +1742,16 @@
     function hud() {
       const spot = currentSpot();
       const col = COLORS.find((c) => c.id === G.color);
-      $("hud-left").textContent = `BILL  ${MONTHS.find((m) => m.id === G.month).name}`;
+      $("hud-left").textContent = `${playerName()}  ${G.score}   BILL ${G.rival.score}`;
       $("hud-center").textContent = `${clockString(G.hour)}   ${timeBucket(G.hour).toUpperCase()}   LEFT ${remaining()}`;
-      $("hud-right").textContent = `WIND ${G.windDir} ${G.windKts}   ${G.tide}   ${G.score} PTS`;
+      $("hud-right").textContent = `WIND ${G.windDir} ${G.windKts}   ${G.tide}`;
+      const billLine = billHere()
+        ? `<span style="color:#e8c547">MONTAUK BILL IS HERE — YOU CAN'T FISH THIS HOLE. TALK TO HIM.</span><br>`
+        : (G.rival.spot >= 0 ? `BILL LAST SEEN · ${SPOTS[G.rival.spot].name}<br>` : "");
       $("spot-info").innerHTML =
         `<b style="color:#efe6d0">${spot.name}</b><br>` +
         `${spot.side.toUpperCase()} SIDE · ${spot.rocky ? "BOULDER FIELD" : "SAND / COBBLE"}<br>` +
+        billLine +
           `${G.view === "surf" ? "SURF VIEW — arrows + space" : "MAP — click or ← → then FISH HERE"}<br>` +
         `${col.name} ${G.lure}  ·  BOX ${boxLeft()}`;
     }
@@ -1684,12 +1935,18 @@
         vctx.fillRect(x - sz / 2, y - sz / 2, sz, sz);
         vctx.strokeStyle = "#000";
         vctx.strokeRect(x - sz / 2, y - sz / 2, sz, sz);
+        if (i === G.rival.spot) {
+          vctx.fillStyle = "#e8c547";
+          vctx.font = "10px 'Press Start 2P', monospace";
+          vctx.fillText("B", x + 6, y - 6);
+        }
         if (hover && !hot) {
           vctx.fillStyle = "#0a1020";
-          vctx.fillRect(x + 8, y - 16, s.name.length * 8 + 8, 14);
+          const label = i === G.rival.spot ? s.name + " · BILL" : s.name;
+          vctx.fillRect(x + 8, y - 16, label.length * 8 + 8, 14);
           vctx.fillStyle = "#efe6d0";
           vctx.font = "8px 'Press Start 2P', monospace";
-          vctx.fillText(s.name, x + 12, y - 5);
+          vctx.fillText(label, x + 12, y - 5);
         }
       });
       const s = SPOTS[G.spotIndex];
@@ -1761,6 +2018,7 @@
       chips($("time-row"), TIMES, (t) => t.id, (t) => t.name, setup.timeId, (id) => { setup.timeId = id; renderSetup(); });
       chips($("lure-row"), LURES, (l) => l, (l) => l, setup.lure, (id) => { setup.lure = id; renderSetup(); });
       chips($("color-row"), COLORS, (c) => c.id, (c) => c.name, setup.color, (id) => { setup.color = id; renderSetup(); });
+      $("name-input").value = setup.name;
       const demoSeed = hash(setup.month + setup.timeId);
       const r = mulberry(demoSeed);
       const dir = WINDS[Math.floor(r() * 8)];
@@ -1771,6 +2029,7 @@
         `TIDE WILL SWING FLOOD / EBB<br>` +
         `SEAWEED FOLLOWS ONSHORE WIND<br>` +
         `BOX: 3 BUCKTAILS · 2 POPPERS · 2 DARTERS · 2 MINNOWS<br>` +
+        `GOAL: OUTFISH MONTAUK BILL<br>` +
         `6 HOURS · 2 REAL MIN = 1 GAME HOUR`;
     }
     function renderGear() {
@@ -1879,13 +2138,19 @@
       openTrophy("screen-game");
     };
     $("btn-fish").onclick = () => {
-      if (G.travel || G.fish) return;
+      if (G.travel || G.fish || G.talking) return;
+      if (billHere()) {
+        toast("BILL'S HOLE — TALK OR MOVE ON");
+        return;
+      }
       if (G.view !== "surf") {
         G.view = "surf";
         resetBill();
         toast(currentSpot().rocky ? "WADE OUT · CLIMB · CAST" : "CAST FROM THE WASH");
       }
     };
+    $("btn-talk").onclick = () => startTalk();
+    $("talk").onclick = () => { if (G.talking && G.talkDone) finishTalk(); };
     $("btn-map").onclick = () => { G.view = "map"; G.lureIn = false; G.fish = null; };
     $("btn-pause").onclick = () => {
       G.paused = !G.paused;
@@ -1898,8 +2163,22 @@
     window.addEventListener("resize", resize);
 
     window.addEventListener("keydown", (e) => {
+      if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
       const k = e.key.toLowerCase();
       if (k === " " || k.startsWith("arrow")) e.preventDefault();
+      if (G.talking) {
+        if (k === " " || k === "enter") {
+          if (G.talkDone) finishTalk();
+          else {
+            G.talkShown = G.talkFull.length;
+            $("talk-text").textContent = G.talkFull;
+            G.talkDone = true;
+            $("talk-face").src = TALK_CLOSED;
+            $("talk-cont").style.visibility = "visible";
+          }
+        }
+        return;
+      }
       if ($("screen-title").classList.contains("active") && (k === "enter" || k === " ")) {
         $("btn-start").click();
         return;
@@ -1908,6 +2187,7 @@
       if (k === "p") $("btn-pause").click();
       if (k === "m") $("btn-map").click();
       if (k === "f") $("btn-fish").click();
+      if (k === "t") startTalk();
       if (k === "arrowleft" || k === "a") {
         if (!keys.left) keys.leftTap = true;
         keys.left = true;
@@ -1973,6 +2253,7 @@
       keys.left = keys.right = keys.up = keys.down = keys.space = false;
     });
 
+    loadSavedName();
     resize();
     requestAnimationFrame(loop);
   })();

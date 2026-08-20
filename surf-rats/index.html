@@ -477,7 +477,7 @@
     <section id="screen-setup" class="screen">
       <div class="setup-card">
         <h2>PLAN THE TRIP</h2>
-        <div class="callsign">A RANDOM BEACH CALLSIGN IS ASSIGNED WHEN YOU LAUNCH — NOT CHOSEN BY YOU</div>
+        <div class="callsign" id="setup-welcome">Welcome. Can you outfish Montauk Bill?</div>
         <div class="field">
           <label>MONTH</label>
           <div class="chip-row" id="month-row"></div>
@@ -579,7 +579,7 @@
   <div class="help" id="help">
     <div class="box">
       <h3>HOW TO FISH MONTAUK</h3>
-      <p>You're assigned a random beach callsign when the trip launches — Googin, Herb, Dangler, or Spotburn. Montauk Bill already knows every hole. Outfish him before the trip clock dies.</p>
+      <p>Montauk Bill already knows every hole. Outfish him before the trip clock dies.</p>
       <p>Storms roll in sometimes. Light rain can wake the bass up. A downpour can be hot — but lightning follows. Distant strikes flash the screen; the closer the storm, the faster the flashes and the higher the chance you get hit on the rocks. Fish or flee.</p>
       <p>Walk the shore map and pick a spot, then hit FISH HERE. Gold B on the map is Montauk Bill. You cannot fish his hole. Talk to him — he may give you a tip — then he leaves.</p>
       <p>ARROWS / WASD move. UP wades out. DOWN comes in. Hold SPACE to aim and build cast power — release to throw. While aiming, ◀▶ aim along the surf and ▲▼ pick depth. The power meter fills like Wii golf; hit the green sweet spot at the top for max distance. SPACE also works the lure, climbs a boulder, or pumps a fish.</p>
@@ -1259,7 +1259,6 @@
     }
 
     function startTrip() {
-      G.playerName = pickPlayerName();
       G.seed = (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0;
       G.rng = mulberry(G.seed);
       G.month = setup.month;
@@ -1289,7 +1288,7 @@
       rebuildPicky();
       resetBill();
       G.rival.spot = pickBillSpot(-1);
-      log("callsign assigned: " + playerName(), "good");
+      log("Welcome " + playerName() + ". Can you outfish Montauk Bill?", "good");
       log(playerName() + " hits the rocks. Wind " + G.windDir + " " + G.windKts + ".");
       if (G.storm.active) {
         if (G.storm.rain === 2) log("storm already hammering — bass should eat", "good");
@@ -1297,7 +1296,7 @@
         else log("thunder in the distance — storm building", "warn");
       }
       log("Montauk Bill is already on " + SPOTS[G.rival.spot].name + ". Outfish him.", "warn");
-      toast("YOU ARE " + playerName());
+      toast("Welcome " + playerName() + ". Can you outfish Montauk Bill?");
       showScreen("screen-game");
       G.mode = "game";
       G.lastTs = performance.now();
@@ -2400,6 +2399,12 @@
         row.appendChild(b);
       });
     }
+    function openSetup() {
+      G.playerName = pickPlayerName();
+      $("setup-welcome").textContent = "Welcome " + playerName() + ". Can you outfish Montauk Bill?";
+      showScreen("screen-setup");
+      renderSetup();
+    }
     function renderSetup() {
       chips($("month-row"), MONTHS, (m) => m.id, (m) => m.name, setup.month, (id) => { setup.month = id; renderSetup(); });
       chips($("time-row"), TIMES, (t) => t.id, (t) => t.name, setup.timeId, (id) => { setup.timeId = id; renderSetup(); });
@@ -2512,13 +2517,13 @@
       });
     }
 
-    $("btn-start").onclick = () => { ensureAudio(); showScreen("screen-setup"); renderSetup(); };
+    $("btn-start").onclick = () => { ensureAudio(); openSetup(); };
     $("btn-trophy").onclick = () => openTrophy("screen-title");
     $("btn-how").onclick = () => $("help").classList.add("on");
     $("btn-help-close").onclick = () => $("help").classList.remove("on");
     $("btn-back-title").onclick = () => showScreen("screen-title");
     $("btn-launch").onclick = () => { ensureAudio(); startTrip(); resize(); };
-    $("btn-again").onclick = () => showScreen("screen-setup");
+    $("btn-again").onclick = () => openSetup();
     $("btn-results-trophy").onclick = () => openTrophy("screen-results");
     $("btn-trophy-back").onclick = () => closeTrophy();
     $("btn-case").onclick = () => {

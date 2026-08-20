@@ -133,6 +133,8 @@
       box-shadow: 0 3px 0 #000;
     }
     .chip.on { background: var(--gold); color: #1a1204; }
+    .chip.out { opacity: 0.38; cursor: not-allowed; }
+    .chip .qty { color: var(--amber); }
     .forecast {
       background: #101628;
       padding: 12px;
@@ -232,6 +234,7 @@
     }
     .bar.tension > i { background: var(--red); }
     .bar.land > i { background: var(--green); }
+    #tech-line { color: var(--foam); margin: 6px 0 2px; min-height: 28px; }
     #touch {
       display: none;
       gap: 8px;
@@ -258,6 +261,33 @@
     }
     #screen-results h2 { color: var(--gold); font-size: 16px; margin-bottom: 16px; }
     #results-body { font-size: 10px; line-height: 2; margin-bottom: 22px; }
+
+    #screen-trophy {
+      padding: 18px;
+      overflow: auto;
+      background: radial-gradient(ellipse at 50% 20%, #1a3350 0%, #070b14 70%);
+    }
+    .trophy-card { max-width: 920px; margin: 0 auto; }
+    .trophy-card h3 { color: var(--gold); font-size: 8px; margin: 16px 0 8px; letter-spacing: 1px; }
+    .trophy-stats { font-size: 8px; line-height: 1.9; color: var(--foam); background: #101628; padding: 12px; margin-bottom: 8px; }
+    .trophy-wall { display: flex; flex-wrap: wrap; gap: 8px; }
+    .mount {
+      background: #101628;
+      border: 3px solid #000;
+      box-shadow: 4px 4px 0 #000;
+      padding: 8px;
+      width: 140px;
+      font-size: 7px;
+      line-height: 1.7;
+      color: var(--ink);
+    }
+    .mount b { color: var(--gold); display: block; margin-bottom: 4px; }
+    .mount .sil {
+      height: 18px;
+      background: #6a8a5a;
+      margin: 6px 0;
+      box-shadow: 2px 2px 0 #000;
+    }
 
     .help {
       position: fixed;
@@ -291,6 +321,7 @@
         <p>MONTAUK POINT · CATCH &amp; RELEASE<br /><span class="blink">PRESS START</span></p>
         <div class="row">
           <button class="pixel-btn" id="btn-start">START TRIP</button>
+          <button class="pixel-btn ghost" id="btn-trophy">TROPHY CASE</button>
           <button class="pixel-btn ghost" id="btn-how">HOW TO FISH</button>
         </div>
       </div>
@@ -340,6 +371,7 @@
           <h3>LURE BOX</h3>
           <div class="chip-row" id="gear-type"></div>
           <div class="chip-row" id="gear-color" style="margin-top:8px"></div>
+          <div id="tech-line"></div>
           <div id="meters">
             <div>LINE IN</div>
             <div class="bar land"><i id="land-bar"></i></div>
@@ -351,6 +383,7 @@
           <div class="row" style="margin-top:10px">
             <button class="pixel-btn small" id="btn-fish">FISH HERE</button>
             <button class="pixel-btn small ghost" id="btn-map">MAP</button>
+            <button class="pixel-btn small ghost" id="btn-case">CASE</button>
             <button class="pixel-btn small ghost" id="btn-pause">PAUSE</button>
           </div>
         </aside>
@@ -362,7 +395,7 @@
           <button class="pixel-btn small" data-k="up">▲</button>
           <button class="pixel-btn small" data-k="right">▶</button>
         </div>
-        <button class="pixel-btn small" data-k="space">CAST / REEL</button>
+        <button class="pixel-btn small" data-k="space">CAST / WORK</button>
       </div>
     </section>
 
@@ -371,6 +404,21 @@
       <div id="results-body"></div>
       <div class="row">
         <button class="pixel-btn" id="btn-again">FISH AGAIN</button>
+        <button class="pixel-btn ghost" id="btn-results-trophy">TROPHY CASE</button>
+      </div>
+    </section>
+
+    <section id="screen-trophy" class="screen">
+      <div class="setup-card trophy-card">
+        <h2>TROPHY CASE</h2>
+        <div class="trophy-stats" id="trophy-career"></div>
+        <h3>THIS TRIP</h3>
+        <div class="trophy-stats" id="trophy-trip"></div>
+        <h3>THE WALL</h3>
+        <div class="trophy-wall" id="trophy-wall"></div>
+        <div class="row" style="margin-top:18px">
+          <button class="pixel-btn" id="btn-trophy-back">BACK</button>
+        </div>
       </div>
     </section>
   </div>
@@ -379,9 +427,11 @@
     <div class="box">
       <h3>HOW TO FISH MONTAUK</h3>
       <p>You are BILL. Walk the shore map and pick a spot, then hit FISH HERE.</p>
-      <p>ARROWS / WASD move. UP wades out. DOWN comes in. SPACE casts, retrieves, climbs a boulder, or reels.</p>
-      <p>Rocky spots have boulders. Wade out and climb for better water — waves can shove you back or knock you off.</p>
-      <p>Wind piles seaweed onto the onshore side. A fouled lure catches nothing. Change type (1–4) and color ([ ]) until something eats. Nothing is guaranteed.</p>
+      <p>ARROWS / WASD move. UP wades out. DOWN comes in. SPACE casts, works the lure, climbs a boulder, or pumps a fish.</p>
+      <p>Rocky spots have boulders. Wade out and climb. Waves shove you back. They knock you off only if you stand too far seaward or the peak is pointy — slab rocks hold better.</p>
+      <p>You carry a small box. Montauk eats plugs. Fish the rocks careless and you leave hardware in them.</p>
+      <p>Work each lure right or it is just swimming. POPPER: shake it on top (tap SPACE). DARTER: reel, and tap UP every other turn. MINNOW: slow and steady (hold SPACE). BUCKTAIL: low and slow, lift the rod now and then so it does not hang in the boulders.</p>
+      <p>Wind piles seaweed onto the onshore side. A fouled lure catches nothing. Change type (1–4) and color ([ ]) until something eats.</p>
       <p>When you hook up, pump the rod with SPACE. Too much heat snaps the line. Too little and a shark or seal may steal the bass. Points count only when you LAND the fish. Then you let it go.</p>
       <p>A trip is 6 hours. Two real minutes is one game hour. Click a map marker to hike the coast (hiking costs time).</p>
       <p style="margin-top:12px"><button class="pixel-btn" id="btn-help-close">GOT IT</button></p>
@@ -407,6 +457,9 @@
       { id: "night", name: "NIGHT", hour: 21 }
     ];
     const LURES = ["BUCKTAIL", "PENCIL POPPER", "DARTER", "MINNOW"];
+    const STARTER_BOX = { BUCKTAIL: 3, "PENCIL POPPER": 2, DARTER: 2, MINNOW: 2 };
+    const LURE_SHORT = { BUCKTAIL: "BUCK", "PENCIL POPPER": "PENCIL", DARTER: "DARTER", MINNOW: "MINNOW" };
+    const TROPHY_KEY = "surfrats-trophies";
     const COLORS = [
       { id: "white", name: "WHITE", hex: "#f2f0e6" },
       { id: "yellow", name: "YELLOW", hex: "#f0d83a" },
@@ -503,6 +556,9 @@
       tide: "FLOOD",
       lure: "BUCKTAIL",
       color: "white",
+      box: { BUCKTAIL: 3, "PENCIL POPPER": 2, DARTER: 2, MINNOW: 2 },
+      lostLures: 0,
+      catches: [],
       spotIndex: 18,
       travel: null,
       bill: { x: 70, vx: 0, onRock: -1, splash: 0, frame: 0 },
@@ -512,6 +568,18 @@
       lureX: 0,
       lureY: 0,
       lureWeed: false,
+      lureShake: 0,
+      lureHold: 0,
+      reelTurns: 0,
+      reelAcc: 0,
+      needTap: false,
+      darterGood: 0,
+      darterBad: 0,
+      lastLift: 99,
+      snagged: false,
+      snagT: 0,
+      techMul: 1,
+      techHint: "",
       wait: 0,
       fish: null,
       threat: null,
@@ -646,6 +714,89 @@
       $("toast").textContent = msg;
     }
 
+    function emptyTrophies() {
+      return { trips: 0, landed: 0, stolen: 0, snapped: 0, lostLures: 0, biggest: 0, biggestSpot: "", wall: [] };
+    }
+    function loadTrophies() {
+      try {
+        const t = JSON.parse(localStorage.getItem(TROPHY_KEY));
+        if (t && typeof t === "object") return Object.assign(emptyTrophies(), t);
+      } catch (e) {}
+      return emptyTrophies();
+    }
+    function saveTrophies(t) {
+      try { localStorage.setItem(TROPHY_KEY, JSON.stringify(t)); } catch (e) {}
+    }
+    function recordCatch(inch, spotName) {
+      const t = loadTrophies();
+      t.landed += 1;
+      if (inch > t.biggest) {
+        t.biggest = inch;
+        t.biggestSpot = spotName;
+      }
+      t.wall.unshift({
+        inch,
+        spot: spotName,
+        month: MONTHS.find((m) => m.id === G.month).name,
+        lure: G.lure,
+        color: G.color
+      });
+      if (t.wall.length > 24) t.wall.pop();
+      saveTrophies(t);
+    }
+    function recordTripEnd() {
+      const t = loadTrophies();
+      t.trips += 1;
+      t.stolen += G.stolen;
+      t.snapped += G.snapped;
+      t.lostLures += G.lostLures;
+      saveTrophies(t);
+    }
+    function boxLeft() {
+      return LURES.reduce((n, l) => n + (G.box[l] || 0), 0);
+    }
+    function tieNextLure() {
+      if ((G.box[G.lure] || 0) > 0) return true;
+      const next = LURES.find((l) => (G.box[l] || 0) > 0);
+      if (next) {
+        G.lure = next;
+        log("tied on " + next, "warn");
+        renderGear();
+        return true;
+      }
+      toast("BOX IS EMPTY");
+      log("no lures left in the box", "bad");
+      return false;
+    }
+    function loseLure(why) {
+      G.box[G.lure] = Math.max(0, (G.box[G.lure] || 0) - 1);
+      G.lostLures += 1;
+      G.lureIn = false;
+      G.lureWeed = false;
+      G.snagged = false;
+      G.wait = 0;
+      toast("LOST " + LURE_SHORT[G.lure] + " IN THE ROCKS");
+      log((why || "snag") + " — lost a " + G.lure.toLowerCase(), "bad");
+      beep(70, 0.22, "sawtooth", 0.05);
+      tieNextLure();
+      renderGear();
+    }
+
+    function resetLureWork() {
+      G.lureShake = 0;
+      G.lureHold = 0;
+      G.reelTurns = 0;
+      G.reelAcc = 0;
+      G.needTap = false;
+      G.darterGood = 0;
+      G.darterBad = 0;
+      G.lastLift = 0;
+      G.snagged = false;
+      G.snagT = 0;
+      G.techMul = 1;
+      G.techHint = "";
+    }
+
     function resetBill() {
       G.bill = { x: 78, vx: 0, onRock: -1, splash: 0, frame: 0 };
       G.lureIn = false;
@@ -655,15 +806,18 @@
       G.waves = [];
       G.weed = [];
       G.particles = [];
+      resetLureWork();
       const spot = currentSpot();
       const n = spot.rocky ? 3 : 0;
       G.boulders = [];
       for (let i = 0; i < n; i++) {
+        const point = i === 2 || (i === 1 && G.rng() < 0.45);
         G.boulders.push({
           x: 168 + i * 42,
-          w: 22 + (i === 2 ? 4 : 0),
+          w: 22 + (i === 2 ? 6 : 2),
           h: 16 + i * 3,
-          quality: 1.1 + i * 0.18
+          quality: 1.1 + i * 0.18,
+          peak: point ? "point" : "slab"
         });
       }
       const weedAmt = onshore(spot, G.windDir) ? G.windKts * 0.7 : G.windKts * 0.08;
@@ -689,6 +843,9 @@
       G.stolen = 0;
       G.snapped = 0;
       G.biggest = 0;
+      G.lostLures = 0;
+      G.catches = [];
+      G.box = Object.assign({}, STARTER_BOX);
       G.lure = setup.lure;
       G.color = setup.color;
       G.spotIndex = 18;
@@ -706,6 +863,7 @@
       showScreen("screen-game");
       G.mode = "game";
       G.lastTs = performance.now();
+      $("btn-pause").textContent = "PAUSE";
       renderGear();
       renderLog();
       beep(220, 0.1); beep(330, 0.14);
@@ -721,11 +879,13 @@
         best = G.score;
         try { localStorage.setItem("surfrats-best", String(best)); } catch (e) {}
       }
+      recordTripEnd();
       $("results-body").innerHTML =
         `${month} · ${TIMES.find((t) => t.id === setup.timeId).name}<br>` +
         `BASS LANDED  ${G.landed}<br>` +
         `BIGGEST  ${G.biggest ? G.biggest + '"' : "—"}<br>` +
         `STOLEN  ${G.stolen}   SNAPPED  ${G.snapped}<br>` +
+        `LURES LOST  ${G.lostLures}   LEFT IN BOX  ${boxLeft()}<br>` +
         `<span style="color:#e8c547">SCORE  ${G.score}</span><br>` +
         `BEST  ${best}`;
       jingle(G.landed > 0);
@@ -752,8 +912,8 @@
       }
       const sea = seas(spot);
       const seaMul = sea > 3.4 ? 0.7 : sea > 1.2 ? 1.1 : 0.9;
-      const perSec = 0.055 * monthBase * timeMul * rockMul * lureMul * spot.q * seaMul;
-      return 1 - Math.pow(1 - clamp(perSec, 0.01, 0.28), dt);
+      const perSec = 0.055 * monthBase * timeMul * rockMul * lureMul * spot.q * seaMul * G.techMul;
+      return 1 - Math.pow(1 - clamp(perSec, 0.008, 0.32), dt);
     }
 
     function fishSize() {
@@ -777,17 +937,17 @@
     function cast() {
       if (G.bill.splash > 0 || G.travel) return;
       if (G.fish) return;
-      if (G.lureIn) {
-        retrieve(false);
-        return;
-      }
+      if (G.lureIn) return;
+      if ((G.box[G.lure] || 0) <= 0 && !tieNextLure()) return;
+      if ((G.box[G.lure] || 0) <= 0) return;
       const spot = currentSpot();
       G.lureIn = true;
       G.lureWeed = false;
       G.wait = 0;
+      resetLureWork();
       const reach = 40 + (G.bill.onRock + 1) * 18;
       G.lureX = G.bill.x + 18 + reach + rand(0, 16);
-      G.lureY = G.lure === "PENCIL POPPER" ? 118 : G.lure === "DARTER" ? 132 : G.lure === "MINNOW" ? 128 : 136;
+      G.lureY = G.lure === "PENCIL POPPER" ? 118 : G.lure === "DARTER" ? 132 : G.lure === "MINNOW" ? 128 : 138;
       beep(520, 0.05, "square", 0.04, -200);
       setTimeout(() => beep(140, 0.08, "triangle", 0.04), 180);
       const weedRisk = onshore(spot, G.windDir) ? G.windKts / 42 : G.windKts / 120;
@@ -805,7 +965,9 @@
       }
       G.lureIn = false;
       G.lureWeed = false;
+      G.snagged = false;
       G.wait = 0;
+      resetLureWork();
     }
 
     function hookUp() {
@@ -841,6 +1003,8 @@
       G.score += pts;
       G.landed += 1;
       G.biggest = Math.max(G.biggest, inch);
+      G.catches.push({ inch, spot: currentSpot().name, lure: G.lure });
+      recordCatch(inch, currentSpot().name);
       log("LANDED  " + inch + "\"  +" + pts + "  released", "good");
       toast("LANDED  " + inch + "\"   +" + pts);
       G.fish = null;
@@ -901,14 +1065,177 @@
       G.bill.x = Math.max(90, G.bill.x - 36);
       G.shake = 0.45;
       beep(90, 0.2, "sawtooth", 0.06);
-      toast("WAVE HIT");
+      toast("KNOCKED OFF");
       if (G.fish) loseFish("wave");
+      else if (G.snagged) loseLure("washed off a snag");
       else if (G.lureIn) retrieve(false);
     }
 
+    function shoveFromRock(power, dt) {
+      const bill = G.bill;
+      const b = G.boulders[bill.onRock];
+      if (!b) return;
+      bill.x -= power * 22 * dt;
+      const minX = b.x - 6;
+      const maxX = b.x + b.w + 2;
+      if (bill.x < minX) {
+        bill.onRock = -1;
+        bill.x = minX - 4;
+        toast("WASHED IN");
+        return;
+      }
+      bill.x = clamp(bill.x, minX, maxX);
+      const seaward = bill.x > b.x + b.w * 0.52;
+      const pointy = b.peak === "point";
+      if (!seaward && !pointy) return;
+      const need = pointy ? (seaward ? 1.35 : 1.85) : 2.35;
+      if (power > need && G.rng() < dt * 1.6) knockOff();
+    }
+
     function spawnWave(spot) {
-      const power = seas(spot) * (0.6 + G.rng() * 0.8);
-      G.waves.push({ x: 330, power, w: 30 + power * 10, life: 1 });
+      const power = seas(spot) * (0.55 + G.rng() * 0.7);
+      G.waves.push({ x: 330, power, w: 28 + power * 9, life: 1 });
+    }
+
+    function updateLureWork(dt, bill, spot) {
+      const rocky = spot.rocky;
+      G.lastLift += dt;
+      G.lureShake = Math.max(0, G.lureShake - dt * 1.7);
+      if (keys.space) G.lureHold += dt;
+      else G.lureHold = 0;
+
+      if (G.snagged) {
+        G.snagT += dt;
+        G.techMul = 0.05;
+        G.techHint = "SNAGGED — TAP UP TO POP FREE";
+        if (keys.upTap) {
+          if (G.rng() < 0.55) {
+            G.snagged = false;
+            G.lastLift = 0;
+            G.lureY -= 10;
+            toast("POPPED FREE");
+            log("yanked it off the rock", "good");
+            beep(400, 0.08);
+          } else {
+            loseLure("hung in the boulders");
+            return;
+          }
+        } else if (G.snagT > 3.8) {
+          loseLure("hung in the boulders");
+        }
+        return;
+      }
+
+      let tech = 0.4;
+      let hint = "";
+      let speed = 0;
+
+      if (G.lure === "PENCIL POPPER") {
+        G.lureY = lerp(G.lureY, 116, dt * 4);
+        if (keys.spaceTap) {
+          G.lureShake = 1;
+          G.lureX -= 4;
+          G.lureY = 112;
+          beep(640, 0.03, "square", 0.03);
+        }
+        if (keys.space && G.lureHold > 0.12) speed = 14;
+        tech = G.lureShake > 0.28 ? 1.55 : 0.32;
+        hint = G.lureShake > 0.28 ? "WALKING THE DOG" : "SHAKE IT ON TOP";
+      } else if (G.lure === "DARTER") {
+        G.lureY = lerp(G.lureY, 130, dt * 2);
+        if (keys.space) {
+          speed = 26;
+          G.reelAcc += dt * 2.15;
+        }
+        while (G.reelAcc >= 1) {
+          G.reelAcc -= 1;
+          G.reelTurns += 1;
+          if (G.reelTurns % 2 === 0) {
+            if (G.needTap) G.darterBad += 1;
+            G.needTap = true;
+          }
+        }
+        if (keys.upTap) {
+          if (G.needTap) {
+            G.darterGood += 1;
+            G.needTap = false;
+            G.lureY -= 5;
+            beep(420, 0.04, "square", 0.03);
+          } else {
+            G.darterBad += 1;
+          }
+        }
+        const trials = G.darterGood + G.darterBad;
+        const ratio = trials < 1 ? 0.45 : G.darterGood / trials;
+        tech = 0.35 + ratio * 1.2;
+        hint = G.needTap ? "TAP THE ROD (UP)" : "REEL — TAP EVERY OTHER TURN";
+      } else if (G.lure === "MINNOW") {
+        G.lureY = lerp(G.lureY, 128, dt * 2);
+        if (keys.spaceTap && G.lureHold < 0.08) {
+          speed = 48;
+          tech = 0.28;
+          hint = "TOO JERKY — SLOW AND STEADY";
+        } else if (keys.space) {
+          speed = 20;
+          tech = 1.45;
+          hint = "SLOW AND STEADY";
+        } else {
+          tech = 0.4;
+          hint = "KEEP IT SWIMMING";
+        }
+      } else {
+        G.lureY = lerp(G.lureY, 138, dt * 1.6);
+        if (keys.upTap) {
+          G.lastLift = 0;
+          G.lureY = 124;
+          beep(300, 0.05, "triangle", 0.03);
+        }
+        if (keys.space) speed = 12;
+        const hop = G.lastLift > 0.7 && G.lastLift < 2.4;
+        if (keys.space && hop) {
+          tech = 1.5;
+          hint = "LOW AND SLOW";
+        } else if (keys.space && G.lastLift < 0.45) {
+          tech = 0.7;
+          hint = "LET IT DROP";
+        } else if (keys.space) {
+          tech = 0.55;
+          hint = "LIFT IT OFF THE ROCKS";
+        } else {
+          tech = 0.35;
+          hint = "CRANK LOW — LIFT NOW AND THEN";
+        }
+        if (rocky && G.lureY > 132 && G.lastLift > 2.6 && keys.space) {
+          if (G.rng() < dt * 0.55) {
+            G.snagged = true;
+            G.snagT = 0;
+            toast("SNAGGED");
+            log("bucktail hung in the rocks", "warn");
+            beep(90, 0.12, "sawtooth", 0.05);
+          }
+        }
+      }
+
+      if (keys.down) speed = Math.max(speed, 80);
+
+      G.lureX -= speed * dt;
+      if (G.lure === "PENCIL POPPER" && G.lureShake > 0) {
+        G.lureY = 114 + Math.sin(G.wait * 18) * 3 * G.lureShake;
+      }
+
+      if (rocky && G.lure !== "PENCIL POPPER" && G.lureY > 133 && speed > 36) {
+        if (G.rng() < dt * 0.35) {
+          G.snagged = true;
+          G.snagT = 0;
+          toast("SNAGGED");
+          log("cranked it into the rocks", "warn");
+        }
+      }
+
+      G.techMul = G.lureWeed ? 0.05 : tech;
+      G.techHint = G.lureWeed ? "FOULED IN WEED" : hint;
+
+      if (G.lureX <= bill.x + 22) retrieve(false);
     }
 
     function updateSurf(dt) {
@@ -921,34 +1248,43 @@
         return;
       }
 
+      const working = G.lureIn || !!G.fish;
       const inWater = bill.x > 128 && bill.onRock < 0;
       const speed = inWater ? 38 : 70;
       if (keys.right) bill.x += speed * dt;
       if (keys.left) bill.x -= speed * dt;
-      if (keys.up && bill.onRock < 0) bill.x += speed * 0.7 * dt;
-      if (keys.down) {
+      if (keys.up && bill.onRock < 0 && !working) bill.x += speed * 0.7 * dt;
+      if (keys.down && !G.lureIn) {
         if (bill.onRock >= 0) {
           bill.onRock = -1;
           bill.x -= 8;
         } else bill.x -= speed * 0.8 * dt;
       }
-      bill.x = clamp(bill.x, 36, 292);
+      if (bill.onRock >= 0) {
+        const b = G.boulders[bill.onRock];
+        bill.x = clamp(bill.x, b.x - 4, b.x + b.w + 2);
+      } else {
+        bill.x = clamp(bill.x, 36, 292);
+      }
 
       if (keys.spaceTap) {
         const near = boulderAt(bill.x);
         if (G.fish) {
           /* reel handled below */
+        } else if (G.lureIn) {
+          /* retrieve handled in updateLureWork */
         } else if (bill.onRock < 0 && near >= 0 && bill.x > 150) {
           bill.onRock = near;
-          bill.x = G.boulders[near].x + 6;
+          bill.x = G.boulders[near].x + 4;
           beep(300, 0.08);
-          log("climbed a boulder at " + spot.name);
+          log("climbed a " + (G.boulders[near].peak === "point" ? "pointy" : "slab") + " boulder at " + spot.name);
         } else {
           cast();
         }
+        keys.spaceTap = false;
       }
 
-      if (G.rng() < dt * (0.35 + seas(spot) * 0.15)) spawnWave(spot);
+      if (G.rng() < dt * (0.12 + seas(spot) * 0.07)) spawnWave(spot);
       for (let i = G.waves.length - 1; i >= 0; i--) {
         const w = G.waves[i];
         w.x -= (55 + w.power * 25) * dt;
@@ -956,14 +1292,12 @@
         const hit = bill.x > w.x - 8 && bill.x < w.x + w.w;
         if (!hit) continue;
         if (bill.onRock >= 0) {
-          const need = 1.7 + bill.onRock * 0.35;
-          if (w.power > need && G.rng() < 0.35 * dt * 12) knockOff();
+          shoveFromRock(w.power, dt);
         } else if (bill.x > 130) {
-          bill.x -= w.power * 55 * dt;
-          if (w.power > 2.4 && G.rng() < 0.2) {
-            bill.splash = 0.7;
-            G.shake = 0.25;
-            if (G.fish) loseFish("wave");
+          bill.x -= w.power * 48 * dt;
+          if (w.power > 2.8 && bill.x > 210 && G.rng() < dt * 0.8) {
+            bill.splash = 0.55;
+            G.shake = 0.18;
           }
         }
       }
@@ -976,12 +1310,14 @@
 
       if (G.lureIn && !G.fish) {
         G.wait += dt;
-        if (G.lure === "PENCIL POPPER") G.lureY = 116 + Math.sin(G.wait * 9) * 2;
-        if (G.lureWeed) {
+        updateLureWork(dt, bill, spot);
+        if (!G.lureIn) {
+          /* reeled in or lost */
+        } else if (G.lureWeed) {
           if (G.wait > 1.4) retrieve(false);
-        } else if (G.rng() < biteChance(dt)) {
+        } else if (!G.snagged && G.rng() < biteChance(dt)) {
           hookUp();
-        } else if (G.wait > 18) {
+        } else if (G.wait > 22) {
           toast("NOTHING");
           retrieve(false);
         }
@@ -1013,6 +1349,7 @@
 
       $("land-bar").style.width = (G.fish ? G.fish.land : 0) + "%";
       $("ten-bar").style.width = (G.fish ? G.fish.tension : 0) + "%";
+      if ($("tech-line")) $("tech-line").textContent = G.lureIn && !G.fish ? G.techHint : (G.fish ? "PUMP SPACE — DON'T HORSE IT" : "");
 
       G.particles.forEach((p) => {
         p.life -= dt;
@@ -1085,6 +1422,8 @@
       }
       G.shake = Math.max(0, G.shake - dt);
       keys.spaceTap = false;
+      keys.upTap = false;
+      keys.downTap = false;
       hud();
     }
 
@@ -1105,7 +1444,7 @@
         `<b style="color:#efe6d0">${spot.name}</b><br>` +
         `${spot.side.toUpperCase()} SIDE · ${spot.rocky ? "BOULDER FIELD" : "SAND / COBBLE"}<br>` +
           `${G.view === "surf" ? "SURF VIEW — arrows + space" : "MAP — click or ← → then FISH HERE"}<br>` +
-        `${col.name} ${G.lure}`;
+        `${col.name} ${G.lure}  ·  BOX ${boxLeft()}`;
     }
 
     /* ---------- draw ---------- */
@@ -1212,8 +1551,14 @@
         pix(bctx, w.x + 2, w.y + 2, w.s * 0.6, 2, "#2a4a18");
       });
       G.boulders.forEach((b, i) => {
-        pix(bctx, b.x, 124 - b.h, b.w, b.h + 10, i === 2 ? "#5a5348" : "#6a6358");
-        pix(bctx, b.x + 3, 122 - b.h, b.w - 6, 4, "#8a8378");
+        const body = b.peak === "point" ? "#5a4e40" : (i === 2 ? "#5a5348" : "#6a6358");
+        pix(bctx, b.x, 124 - b.h, b.w, b.h + 10, body);
+        if (b.peak === "point") {
+          pix(bctx, b.x + 6, 116 - b.h, Math.max(6, b.w - 12), 10, "#7a6e60");
+          pix(bctx, b.x + Math.floor(b.w / 2) - 3, 108 - b.h, 6, 10, "#8a7e70");
+        } else {
+          pix(bctx, b.x + 3, 122 - b.h, b.w - 6, 4, "#8a8378");
+        }
       });
 
       pix(bctx, 0, 138, 132, 42, pal().sand);
@@ -1236,7 +1581,7 @@
         bctx.lineTo(G.lureX, G.lureY);
         bctx.stroke();
         const lc = COLORS.find((c) => c.id === G.color).hex;
-        pix(bctx, G.lureX, G.lureY, 4, 3, G.lureWeed ? "#3a5a28" : lc);
+        pix(bctx, G.lureX, G.lureY, 4, 3, G.lureWeed || G.snagged ? "#3a5a28" : lc);
       }
       if (G.fish) drawBass(bctx, G.fish.x, G.fish.y);
       if (G.threat) drawCreature(bctx, G.threat.x, 120, G.threat.kind);
@@ -1386,19 +1731,70 @@
         `WIND STARTS ${dir} AT ${kts} KTS<br>` +
         `TIDE WILL SWING FLOOD / EBB<br>` +
         `SEAWEED FOLLOWS ONSHORE WIND<br>` +
-        `6 HOURS · 1 REAL MIN = 1 GAME HOUR`;
+        `BOX: 3 BUCKTAILS · 2 POPPERS · 2 DARTERS · 2 MINNOWS<br>` +
+        `6 HOURS · 2 REAL MIN = 1 GAME HOUR`;
     }
     function renderGear() {
-      chips($("gear-type"), LURES, (l) => l, (l) => l.replace("PENCIL POPPER", "PENCIL"), G.lure, (id) => {
-        G.lure = id;
-        renderGear(); hud();
-        if (G.lureIn && !G.fish) retrieve(false);
+      const row = $("gear-type");
+      row.innerHTML = "";
+      LURES.forEach((l) => {
+        const n = G.box[l] || 0;
+        const b = document.createElement("button");
+        b.className = "chip" + (G.lure === l ? " on" : "") + (n <= 0 ? " out" : "");
+        b.innerHTML = LURE_SHORT[l] + ` <span class="qty">x${n}</span>`;
+        b.onclick = () => {
+          if (n <= 0) { toast("NONE LEFT"); return; }
+          G.lure = l;
+          renderGear(); hud();
+          if (G.lureIn && !G.fish) retrieve(false);
+        };
+        row.appendChild(b);
       });
       chips($("gear-color"), COLORS, (c) => c.id, (c) => c.name, G.color, (id) => {
         G.color = id;
         renderGear(); hud();
         if (G.lureIn && !G.fish) retrieve(false);
       });
+    }
+
+    function renderTrophy() {
+      const t = loadTrophies();
+      $("trophy-career").innerHTML =
+        `TRIPS  ${t.trips}<br>` +
+        `LANDED  ${t.landed}   BIGGEST  ${t.biggest ? t.biggest + '" @ ' + t.biggestSpot : "—"}<br>` +
+        `STOLEN  ${t.stolen}   SNAPPED  ${t.snapped}   LURES LEFT IN ROCKS  ${t.lostLures}`;
+      if (G.catches.length) {
+        $("trophy-trip").innerHTML = G.catches.map((c) =>
+          `${c.inch}"  ${c.spot}  ·  ${LURE_SHORT[c.lure]}`
+        ).join("<br>");
+      } else {
+        $("trophy-trip").innerHTML = G.mode === "game" || G.mode === "results"
+          ? "NO BASS THIS TRIP YET"
+          : "LAUNCH A TRIP TO FILL THE BOX";
+      }
+      const wall = t.wall.slice(0, 12);
+      $("trophy-wall").innerHTML = wall.length ? wall.map((f) => {
+        const w = Math.max(18, Math.min(110, f.inch * 2.2));
+        return `<div class="mount"><b>${f.inch}" BASS</b>${f.spot}<br>${f.month} · ${LURE_SHORT[f.lure] || f.lure}<div class="sil" style="width:${w}px"></div></div>`;
+      }).join("") : `<div class="trophy-stats">THE WALL IS EMPTY. GO CATCH SOMETHING.</div>`;
+    }
+    function openTrophy(from) {
+      G.trophyFrom = from;
+      if (from === "screen-game") {
+        G.paused = true;
+        $("btn-pause").textContent = "RESUME";
+      }
+      renderTrophy();
+      showScreen("screen-trophy");
+    }
+    function closeTrophy() {
+      const back = G.trophyFrom || "screen-title";
+      showScreen(back);
+      if (back === "screen-game") {
+        G.paused = false;
+        $("btn-pause").textContent = "PAUSE";
+        toast("BACK ON THE CLOCK");
+      }
     }
 
     function canvasPos(ev) {
@@ -1431,11 +1827,18 @@
     }
 
     $("btn-start").onclick = () => { ensureAudio(); showScreen("screen-setup"); renderSetup(); };
+    $("btn-trophy").onclick = () => openTrophy("screen-title");
     $("btn-how").onclick = () => $("help").classList.add("on");
     $("btn-help-close").onclick = () => $("help").classList.remove("on");
     $("btn-back-title").onclick = () => showScreen("screen-title");
     $("btn-launch").onclick = () => { ensureAudio(); startTrip(); resize(); };
     $("btn-again").onclick = () => showScreen("screen-setup");
+    $("btn-results-trophy").onclick = () => openTrophy("screen-results");
+    $("btn-trophy-back").onclick = () => closeTrophy();
+    $("btn-case").onclick = () => {
+      if (G.mode !== "game") return;
+      openTrophy("screen-game");
+    };
     $("btn-fish").onclick = () => {
       if (G.travel || G.fish) return;
       if (G.view !== "surf") {
@@ -1474,16 +1877,27 @@
         if (!keys.right) keys.rightTap = true;
         keys.right = true;
       }
-      if (k === "arrowup" || k === "w") keys.up = true;
-      if (k === "arrowdown" || k === "s") keys.down = true;
+      if (k === "arrowup" || k === "w") {
+        if (!keys.up) keys.upTap = true;
+        keys.up = true;
+      }
+      if (k === "arrowdown" || k === "s") {
+        if (!keys.down) keys.downTap = true;
+        keys.down = true;
+      }
       if (k === " ") {
         if (!keys.space) keys.spaceTap = true;
         keys.space = true;
       }
-      if (k === "1") { G.lure = LURES[0]; renderGear(); }
-      if (k === "2") { G.lure = LURES[1]; renderGear(); }
-      if (k === "3") { G.lure = LURES[2]; renderGear(); }
-      if (k === "4") { G.lure = LURES[3]; renderGear(); }
+      if (k === "1" || k === "2" || k === "3" || k === "4") {
+        const l = LURES[Number(k) - 1];
+        if (G.fish) return;
+        if ((G.box[l] || 0) > 0) {
+          G.lure = l;
+          renderGear();
+          if (G.lureIn) retrieve(false);
+        } else toast("NONE LEFT");
+      }
       if (k === "[" || k === "]") {
         const i = COLORS.findIndex((c) => c.id === G.color);
         const n = (i + (k === "]" ? 1 : -1) + COLORS.length) % COLORS.length;
@@ -1506,7 +1920,10 @@
         if (k === "space") {
           if (on && !keys.space) keys.spaceTap = true;
           keys.space = on;
-        } else keys[k] = on;
+        } else {
+          if (on && !keys[k]) keys[k + "Tap"] = true;
+          keys[k] = on;
+        }
       };
       btn.addEventListener("pointerdown", (e) => { e.preventDefault(); set(true); });
       btn.addEventListener("pointerup", () => set(false));

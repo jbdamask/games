@@ -428,7 +428,7 @@
       <h3>HOW TO FISH MONTAUK</h3>
       <p>You are BILL. Walk the shore map and pick a spot, then hit FISH HERE.</p>
       <p>ARROWS / WASD move. UP wades out. DOWN comes in. SPACE casts, works the lure, climbs a boulder, or pumps a fish.</p>
-      <p>Rocky spots have boulders. Wade out and climb. Waves shove you back. They knock you off only if you stand too far seaward or the peak is pointy — slab rocks hold better.</p>
+      <p>Rocky spots have boulders. Wade out and climb. Waves shove you back. Stand too far back on the rock or too far out on a pointy peak and a big one can wash you off — lose the fish if you're still hooked up.</p>
       <p>You carry a small box. Montauk eats plugs. Fish the rocks careless and you leave hardware in them.</p>
       <p>Work each lure right or it is just swimming. POPPER: shake it on top (tap SPACE). DARTER: reel, and tap UP every other turn. MINNOW: slow and steady (hold SPACE). BUCKTAIL: low and slow, lift the rod now and then so it does not hang in the boulders.</p>
       <p>Wind piles seaweed onto the onshore side. A fouled lure catches nothing. Change type (1–4) and color ([ ]) until something eats.</p>
@@ -591,7 +591,8 @@
       picky: {},
       mapHover: -1,
       weatherSlot: 0,
-      boulders: []
+      boulders: [],
+      upHeld: false
     };
 
     function mulberry(seed) {
@@ -1059,16 +1060,33 @@
       return -1;
     }
 
-    function knockOff() {
-      G.bill.onRock = -1;
-      G.bill.splash = 1.2;
-      G.bill.x = Math.max(90, G.bill.x - 36);
-      G.shake = 0.45;
-      beep(90, 0.2, "sawtooth", 0.06);
-      toast("KNOCKED OFF");
+    function rodTap() {
+      return keys.upTap || (keys.up && !G.upHeld);
+    }
+
+    function fallOffRock(kind) {
+      const bill = G.bill;
+      bill.onRock = -1;
+      if (kind === "knock") {
+        bill.splash = 1.2;
+        bill.x = Math.max(90, bill.x - 36);
+        G.shake = 0.45;
+        beep(90, 0.2, "sawtooth", 0.06);
+        toast("KNOCKED OFF");
+      } else {
+        bill.splash = 0.9;
+        bill.x = Math.max(86, bill.x - 14);
+        G.shake = 0.28;
+        toast("WASHED OFF");
+        beep(90, 0.16, "sawtooth", 0.05);
+      }
       if (G.fish) loseFish("wave");
       else if (G.snagged) loseLure("washed off a snag");
       else if (G.lureIn) retrieve(false);
+    }
+
+    function knockOff() {
+      fallOffRock("knock");
     }
 
     function shoveFromRock(power, dt) {
@@ -1079,14 +1097,18 @@
       const minX = b.x - 6;
       const maxX = b.x + b.w + 2;
       if (bill.x < minX) {
-        bill.onRock = -1;
-        bill.x = minX - 4;
-        toast("WASHED IN");
+        fallOffRock("wash");
         return;
       }
       bill.x = clamp(bill.x, minX, maxX);
       const seaward = bill.x > b.x + b.w * 0.52;
+      const tooFarBack = bill.x < b.x + b.w * 0.34;
       const pointy = b.peak === "point";
+      if (tooFarBack) {
+        const need = pointy ? 1.25 : 1.55;
+        if (power > need && G.rng() < dt * (1.8 + power * 0.35)) knockOff();
+        return;
+      }
       if (!seaward && !pointy) return;
       const need = pointy ? (seaward ? 1.35 : 1.85) : 2.35;
       if (power > need && G.rng() < dt * 1.6) knockOff();
@@ -1108,7 +1130,7 @@
         G.snagT += dt;
         G.techMul = 0.05;
         G.techHint = "SNAGGED — TAP UP TO POP FREE";
-        if (keys.upTap) {
+        if (rodTap()) {
           if (G.rng() < 0.55) {
             G.snagged = false;
             G.lastLift = 0;
@@ -1138,9 +1160,15 @@
           G.lureY = 112;
           beep(640, 0.03, "square", 0.03);
         }
+        if (rodTap()) {
+          G.lureShake = 0.92;
+          G.lureY = 111;
+          G.lureX -= 2;
+          beep(520, 0.03, "square", 0.03);
+        }
         if (keys.space && G.lureHold > 0.12) speed = 14;
         tech = G.lureShake > 0.28 ? 1.55 : 0.32;
-        hint = G.lureShake > 0.28 ? "WALKING THE DOG" : "SHAKE IT ON TOP";
+        hint = G.lureShake > 0.28 ? "WALKING THE DOG" : "SHAKE IT (SPACE) OR ROD SNAP (UP)";
       } else if (G.lure === "DARTER") {
         G.lureY = lerp(G.lureY, 130, dt * 2);
         if (keys.space) {
@@ -1155,7 +1183,7 @@
             G.needTap = true;
           }
         }
-        if (keys.upTap) {
+        if (rodTap()) {
           if (G.needTap) {
             G.darterGood += 1;
             G.needTap = false;
@@ -1171,21 +1199,25 @@
         hint = G.needTap ? "TAP THE ROD (UP)" : "REEL — TAP EVERY OTHER TURN";
       } else if (G.lure === "MINNOW") {
         G.lureY = lerp(G.lureY, 128, dt * 2);
-        if (keys.spaceTap && G.lureHold < 0.08) {
+        if (rodTap()) {
+          G.lureY -= 7;
+          tech = 0.55;
+          hint = "LIGHT ROD LIFT — KEEP IT STEADY";
+        } else if (keys.spaceTap && G.lureHold < 0.08) {
           speed = 48;
           tech = 0.28;
           hint = "TOO JERKY — SLOW AND STEADY";
         } else if (keys.space) {
           speed = 20;
           tech = 1.45;
-          hint = "SLOW AND STEADY";
+          hint = "SLOW AND STEADY (SPACE)";
         } else {
           tech = 0.4;
           hint = "KEEP IT SWIMMING";
         }
       } else {
         G.lureY = lerp(G.lureY, 138, dt * 1.6);
-        if (keys.upTap) {
+        if (rodTap()) {
           G.lastLift = 0;
           G.lureY = 124;
           beep(300, 0.05, "triangle", 0.03);
@@ -1424,6 +1456,7 @@
       keys.spaceTap = false;
       keys.upTap = false;
       keys.downTap = false;
+      G.upHeld = keys.up;
       hud();
     }
 

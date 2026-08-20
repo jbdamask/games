@@ -251,6 +251,25 @@
     #log .good { color: var(--green); }
     #log .bad { color: var(--red); }
     #log .warn { color: var(--amber); }
+    #log .fish-on {
+      color: #fff;
+      background: linear-gradient(90deg, #143820 0%, #1f5530 100%);
+      padding: 10px 8px;
+      margin: 10px -2px;
+      border: 3px solid var(--green);
+      box-shadow: 0 0 10px rgba(111, 191, 115, 0.45);
+      font-size: 9px;
+      line-height: 1.9;
+      letter-spacing: 0.5px;
+      animation: fishOnPulse 0.9s steps(2) infinite;
+    }
+    @keyframes fishOnPulse { 50% { border-color: var(--gold); box-shadow: 0 0 14px rgba(232, 197, 71, 0.55); } }
+    #toast.fish-on {
+      color: var(--gold);
+      font-size: 14px;
+      text-shadow: 3px 3px 0 #000, 0 0 12px rgba(232, 197, 71, 0.75);
+      animation: fishOnPulse 0.9s steps(2) infinite;
+    }
     #meters {
       margin-top: 8px;
     }
@@ -269,6 +288,34 @@
     }
     .bar.tension > i { background: var(--red); }
     .bar.land > i { background: var(--green); }
+    .bar.cast {
+      height: 72px;
+      width: 14px;
+      display: inline-block;
+      vertical-align: bottom;
+      margin: 0 0 8px 6px;
+    }
+    .bar.cast > i {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: 0%;
+      background: linear-gradient(180deg, var(--green) 0%, var(--gold) 55%, var(--amber) 100%);
+    }
+    .bar.cast .sweet {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 18%;
+      background: rgba(111, 191, 115, 0.35);
+      box-shadow: inset 0 0 0 1px var(--green);
+      pointer-events: none;
+    }
+    #cast-meter { display: none; margin-top: 6px; }
+    #cast-meter.on { display: block; }
     #tech-line { color: var(--foam); margin: 6px 0 2px; min-height: 28px; }
     #touch {
       display: none;
@@ -473,6 +520,10 @@
           <div class="chip-row" id="gear-type"></div>
           <div class="chip-row" id="gear-color" style="margin-top:8px"></div>
           <div id="tech-line"></div>
+          <div id="cast-meter">
+            <div>CAST POWER</div>
+            <div class="bar cast"><span class="sweet"></span><i id="cast-bar"></i></div>
+          </div>
           <div id="meters">
             <div>LINE IN</div>
             <div class="bar land"><i id="land-bar"></i></div>
@@ -531,10 +582,10 @@
       <p>You're assigned a random beach callsign when the trip launches — Googin, Herb, Dangler, or Spotburn. Montauk Bill already knows every hole. Outfish him before the trip clock dies.</p>
       <p>Storms roll in sometimes. Light rain can wake the bass up. A downpour can be hot — but lightning follows. Distant strikes flash the screen; the closer the storm, the faster the flashes and the higher the chance you get hit on the rocks. Fish or flee.</p>
       <p>Walk the shore map and pick a spot, then hit FISH HERE. Gold B on the map is Montauk Bill. You cannot fish his hole. Talk to him — he may give you a tip — then he leaves.</p>
-      <p>ARROWS / WASD move. UP wades out. DOWN comes in. SPACE casts, works the lure, climbs a boulder, or pumps a fish.</p>
+      <p>ARROWS / WASD move. UP wades out. DOWN comes in. Hold SPACE to aim and build cast power — release to throw. While aiming, ◀▶ aim along the surf and ▲▼ pick depth. The power meter fills like Wii golf; hit the green sweet spot at the top for max distance. SPACE also works the lure, climbs a boulder, or pumps a fish.</p>
       <p>Rocky spots have boulders. Wade out and climb. Waves shove you back. Stand too far back on the rock or too far out on a pointy peak and a big one can wash you off — lose the fish if you're still hooked up.</p>
       <p>You carry a small box. Montauk eats plugs. Fish the rocks careless and you can lose hardware — but a snag usually gives you time to pop it free with UP.</p>
-      <p>Each lure casts a different distance: BUCKTAIL shortest, DARTER a bit farther, MINNOW farther, POPPER farthest. POPPER: shake it on top (tap SPACE). DARTER: reel, and tap UP every other turn. MINNOW: slow and steady (hold SPACE). BUCKTAIL: low and slow, lift the rod now and then so it does not hang in the boulders.</p>
+      <p>Each lure has a different max cast: BUCKTAIL shortest, DARTER a bit farther, MINNOW farther, POPPER farthest — your timing and aim set how far you actually throw. POPPER: shake it on top (tap SPACE). DARTER: reel, and tap UP every other turn. MINNOW: slow and steady (hold SPACE). BUCKTAIL: low and slow, lift the rod now and then so it does not hang in the boulders.</p>
       <p>Wind piles seaweed onto the onshore side. A fouled lure catches nothing. Change type (1–4) and color ([ ]) until something eats.</p>
       <p>When you hook up, pump SPACE in short bursts — let tension drop between pumps. Too much heat snaps the line. Too little and a shark or seal may steal the bass. Points count only when you LAND the fish. Then you let it go.</p>
       <p>A trip is 6 hours. Two real minutes is one game hour. Click a map marker to hike the coast (hiking costs time).</p>
@@ -722,7 +773,11 @@
       talkFull: "",
       talkShown: 0,
       talkT: 0,
-      talkDone: false
+      talkDone: false,
+      castWindup: false,
+      castChargeT: 0,
+      castAimH: 0,
+      castAimV: 0.5
     };
 
     function mulberry(seed) {
@@ -1072,7 +1127,9 @@
     function toast(msg, t = 1.6) {
       G.toast = msg;
       G.toastT = t;
-      $("toast").textContent = msg;
+      const el = $("toast");
+      el.textContent = msg;
+      el.classList.toggle("fish-on", msg.includes("FISH ON"));
     }
 
     function emptyTrophies() {
@@ -1172,6 +1229,7 @@
       G.lureWeed = false;
       G.fish = null;
       G.threat = null;
+      cancelCastWindup();
       G.waves = [];
       G.weed = [];
       G.particles = [];
@@ -1305,6 +1363,14 @@
       return 1 - Math.pow(1 - clamp(perSec, 0.014, 0.32), dt);
     }
 
+    function fishSizeLabel(inch) {
+      if (inch >= 45) return "COW";
+      if (inch >= 36) return "TROPHY";
+      if (inch >= 28) return "SOLID";
+      if (inch >= 22) return "KEEPER";
+      return "SCHOOLIE";
+    }
+
     function fishSize() {
       const tb = timeBucket(G.hour);
       let cow = 0.08 + (G.month >= 9 ? 0.12 : 0);
@@ -1323,7 +1389,62 @@
       return 10;
     }
 
-    function cast() {
+    const CAST_CHARGE_PEAK = 0.95;
+    const CAST_AIM_SPEED = 1.85;
+
+    function lureDefaultY(lure) {
+      if (lure === "PENCIL POPPER") return 118;
+      if (lure === "DARTER") return 132;
+      if (lure === "MINNOW") return 128;
+      return 138;
+    }
+
+    function calcCastPower(t) {
+      if (t < 0.05) return 0.08;
+      if (t <= CAST_CHARGE_PEAK) return 0.08 + (t / CAST_CHARGE_PEAK) * 0.92;
+      return clamp(1 - 0.14 * (1 + Math.sin((t - CAST_CHARGE_PEAK) * 9)), 0.78, 1);
+    }
+
+    function castBaseReach() {
+      return 40 + (G.bill.onRock + 1) * 18 + (LURE_CAST[G.lure] || 0);
+    }
+
+    function castLanding(power, aimH, aimV) {
+      const bill = G.bill;
+      const powerReach = castBaseReach() * (0.3 + power * 0.7);
+      const lateral = aimH * 34;
+      const depthShift = (aimV - 0.5) * 44;
+      const x = clamp(bill.x + 18 + powerReach + lateral + depthShift * 0.35, bill.x + 26, 392);
+      const y = clamp(lureDefaultY(G.lure) + depthShift + lateral * 0.12, 108, 148);
+      return { x, y };
+    }
+
+    function canCastWindup() {
+      if (G.mode !== "game" || G.view !== "surf" || G.paused || G.talking) return false;
+      if (G.bill.splash > 0 || G.travel || G.fish || G.lureIn) return false;
+      const near = boulderAt(G.bill.x);
+      if (G.bill.onRock < 0 && near >= 0 && G.bill.x > 150) return false;
+      if ((G.box[G.lure] || 0) <= 0 && !tieNextLure()) return false;
+      return (G.box[G.lure] || 0) > 0;
+    }
+
+    function beginCastWindup() {
+      if (!canCastWindup()) return;
+      G.castWindup = true;
+      G.castChargeT = 0;
+      G.castAimH = 0;
+      G.castAimV = 0.5;
+    }
+
+    function cancelCastWindup() {
+      G.castWindup = false;
+      G.castChargeT = 0;
+    }
+
+    function releaseCast() {
+      if (!G.castWindup) return;
+      const power = calcCastPower(G.castChargeT);
+      cancelCastWindup();
       if (G.bill.splash > 0 || G.travel) return;
       if (G.fish) return;
       if (G.lureIn) return;
@@ -1334,13 +1455,14 @@
       G.lureWeed = false;
       G.wait = 0;
       resetLureWork();
-      const reach = 40 + (G.bill.onRock + 1) * 18 + (LURE_CAST[G.lure] || 0) + rand(0, 12);
-      G.lureX = clamp(G.bill.x + 18 + reach, G.bill.x + 26, 392);
-      G.lureY = G.lure === "PENCIL POPPER" ? 118 : G.lure === "DARTER" ? 132 : G.lure === "MINNOW" ? 128 : 138;
-      beep(520, 0.05, "square", 0.04, -200);
-      setTimeout(() => beep(140, 0.08, "triangle", 0.04), 180);
+      const land = castLanding(power, G.castAimH, G.castAimV);
+      G.lureX = land.x;
+      G.lureY = land.y;
+      const pop = 420 + power * 180;
+      beep(pop, 0.05, "square", 0.04, -220 - power * 80);
+      setTimeout(() => beep(120 + power * 60, 0.08, "triangle", 0.04), 160 + (1 - power) * 80);
       const weedRisk = onshore(spot, G.windDir) ? G.windKts / 42 : G.windKts / 120;
-      if (G.weed.length && G.rng() < weedRisk) {
+      if (G.weed.length && G.rng() < weedRisk * (0.85 + power * 0.2)) {
         G.lureWeed = true;
       }
     }
@@ -1361,14 +1483,15 @@
 
     function hookUp() {
       const inch = fishSize();
+      const label = fishSizeLabel(inch);
       G.fish = {
         inch,
         land: 0,
         tension: 22,
         dir: 1,
         fight: 0.7 + inch / 80,
-        x: G.lureX,
-        y: G.lureY
+        runPhase: G.rng() * Math.PI * 2,
+        hookY: G.lureY
       };
       G.threat = null;
       const deep = currentSpot().q > 1.15 || G.bill.onRock >= 1;
@@ -1376,14 +1499,15 @@
       if (G.rng() < stealChance) {
         G.threat = {
           kind: currentSpot().side === "north" && G.rng() < 0.6 ? "seal" : "shark",
-          x: 330,
+          x: G.lureX + 48,
           t: 0
         };
         log(G.threat.kind.toUpperCase() + " in the wash", "warn");
       }
-      toast("FISH ON  " + inch + "\"");
-      log("FISH ON  " + inch + "\" bass", "good");
-      beep(880, 0.07); beep(660, 0.1);
+      const est = "~" + inch + '" ' + label + " STRIPER";
+      toast(">>> FISH ON! <<<\nEST. " + est, 3.8);
+      log(">>> FISH ON! <<<  EST. " + est, "fish-on");
+      beep(880, 0.07); beep(660, 0.1); setTimeout(() => beep(990, 0.12), 120);
     }
 
     function landFish() {
@@ -1685,17 +1809,19 @@
         return;
       }
 
-      const working = G.lureIn || !!G.fish;
+      const working = G.lureIn || !!G.fish || G.castWindup;
       const inWater = bill.x > 128 && bill.onRock < 0;
       const speed = inWater ? 38 : 70;
-      if (keys.right) bill.x += speed * dt;
-      if (keys.left) bill.x -= speed * dt;
-      if (keys.up && bill.onRock < 0 && !working) bill.x += speed * 0.7 * dt;
-      if (keys.down && !G.lureIn) {
-        if (bill.onRock >= 0) {
-          bill.onRock = -1;
-          bill.x -= 8;
-        } else bill.x -= speed * 0.8 * dt;
+      if (!G.castWindup) {
+        if (keys.right) bill.x += speed * dt;
+        if (keys.left) bill.x -= speed * dt;
+        if (keys.up && bill.onRock < 0 && !working) bill.x += speed * 0.7 * dt;
+        if (keys.down && !G.lureIn) {
+          if (bill.onRock >= 0) {
+            bill.onRock = -1;
+            bill.x -= 8;
+          } else bill.x -= speed * 0.8 * dt;
+        }
       }
       if (bill.onRock >= 0) {
         const b = G.boulders[bill.onRock];
@@ -1712,14 +1838,22 @@
         } else if (G.lureIn) {
           /* retrieve handled in updateLureWork */
         } else if (bill.onRock < 0 && near >= 0 && bill.x > 150) {
+          cancelCastWindup();
           bill.onRock = near;
           bill.x = G.boulders[near].x + 4;
           beep(300, 0.08);
           log("climbed a " + (G.boulders[near].peak === "point" ? "pointy" : "slab") + " boulder at " + spot.name);
-        } else {
-          cast();
         }
         keys.spaceTap = false;
+      }
+
+      if (G.castWindup) {
+        if (keys.space) G.castChargeT += dt;
+        else releaseCast();
+        if (keys.left) G.castAimH = clamp(G.castAimH - CAST_AIM_SPEED * dt, -1, 1);
+        if (keys.right) G.castAimH = clamp(G.castAimH + CAST_AIM_SPEED * dt, -1, 1);
+        if (keys.up) G.castAimV = clamp(G.castAimV + CAST_AIM_SPEED * dt, 0, 1);
+        if (keys.down) G.castAimV = clamp(G.castAimV - CAST_AIM_SPEED * dt, 0, 1);
       }
 
       if (G.rng() < dt * (0.12 + seas(spot) * 0.07)) spawnWave(spot);
@@ -1776,19 +1910,38 @@
         f.tension += Math.sin(f.fight * 3.2) * 5 * dt * inch * 0.035;
         f.tension = clamp(f.tension, 0, 110);
         f.land = clamp(f.land, 0, 100);
-        f.x = lerp(f.x, bill.x + 40 + (100 - f.land), dt * 1.5);
+        const homeX = bill.x + 36 + (100 - f.land) * 0.9;
+        const homeY = f.hookY + (100 - f.land) * 0.08;
+        const run = pumping ? 0.35 : 1;
+        const pullX = Math.sin(f.fight * 2.6 + f.runPhase) * (10 + inch * 0.18) * run;
+        const pullY = Math.cos(f.fight * 3.4 + f.runPhase * 0.7) * (5 + inch * 0.07) * run;
+        G.lureX = lerp(G.lureX, homeX + pullX, dt * (pumping ? 2.4 : 1.15));
+        G.lureY = lerp(G.lureY, homeY + pullY, dt * (pumping ? 2.1 : 1.05));
+        G.lureX = clamp(G.lureX, bill.x + 28, 392);
+        G.lureY = clamp(G.lureY, 108, 148);
         if (f.tension >= 100) loseFish("snap");
         else if (f.land >= 100) landFish();
         if (G.threat && G.fish) {
           G.threat.t += dt;
           G.threat.x -= (12 + (G.threat.kind === "shark" ? 9 : 5)) * dt;
-          if (G.threat.t > 1.8 && G.threat.x <= G.fish.x + 8) loseFish(G.threat.kind);
+          if (G.threat.t > 1.8 && G.threat.x <= G.lureX + 10) loseFish(G.threat.kind);
         }
       }
 
       $("land-bar").style.width = (G.fish ? G.fish.land : 0) + "%";
       $("ten-bar").style.width = (G.fish ? G.fish.tension : 0) + "%";
-      if ($("tech-line")) $("tech-line").textContent = G.lureIn && !G.fish ? G.techHint : (G.fish ? "PUMP SPACE IN BURSTS — LET TENSION DROP" : "");
+      const castMeter = $("cast-meter");
+      const castBar = $("cast-bar");
+      if (G.castWindup && castMeter && castBar) {
+        const pwr = calcCastPower(G.castChargeT);
+        castMeter.classList.add("on");
+        castBar.style.height = (pwr * 100) + "%";
+        $("tech-line").textContent = "AIM ◀▶ · DEPTH ▲▼ · RELEASE SPACE · POWER " + Math.round(pwr * 100) + "%";
+      } else {
+        if (castMeter) castMeter.classList.remove("on");
+        if (castBar) castBar.style.height = "0%";
+        if ($("tech-line")) $("tech-line").textContent = G.lureIn && !G.fish ? G.techHint : (G.fish ? "FISH ON — ~" + G.fish.inch + '" ' + fishSizeLabel(G.fish.inch) + " · PUMP SPACE IN BURSTS" : "");
+      }
 
       G.particles.forEach((p) => {
         p.life -= dt;
@@ -1875,7 +2028,7 @@
       updateStorm(dt);
       if (G.toastT > 0) {
         G.toastT -= dt;
-        if (G.toastT <= 0) { G.toast = ""; $("toast").textContent = ""; }
+        if (G.toastT <= 0) { G.toast = ""; $("toast").textContent = ""; $("toast").classList.remove("fish-on"); }
       }
       G.shake = Math.max(0, G.shake - dt);
       keys.spaceTap = false;
@@ -1973,12 +2126,21 @@
       }
     }
 
-    function drawBass(ctx, x, y) {
-      pix(ctx, x, y + 3, 18, 7, "#6a8a5a");
-      pix(ctx, x + 14, y + 1, 6, 5, "#5a7a4a");
-      pix(ctx, x + 2, y + 5, 2, 2, "#111");
-      pix(ctx, x + 4, y, 8, 3, "#4a6a3a");
-      pix(ctx, x + 6, y + 4, 8, 2, "#c8d8c0");
+    function drawBass(ctx, x, y, scale = 1) {
+      const r = (n) => Math.max(1, Math.round(n * scale));
+      pix(ctx, x, y + r(3), r(18), r(7), "#6a8a5a");
+      pix(ctx, x + r(14), y + r(1), r(6), r(5), "#5a7a4a");
+      pix(ctx, x + r(2), y + r(5), r(2), r(2), "#111");
+      pix(ctx, x + r(4), y, r(8), r(3), "#4a6a3a");
+      pix(ctx, x + r(6), y + r(4), r(8), r(2), "#c8d8c0");
+    }
+
+    function drawBassOnLure(ctx, lx, ly, inch, fightT) {
+      const scale = clamp(inch / 22, 0.75, 1.45);
+      const wobble = Math.sin(fightT * 6) * (1.5 + inch * 0.035);
+      const x = Math.round(lx - 6 * scale);
+      const y = Math.round(ly - 8 * scale + wobble);
+      drawBass(ctx, x, y, scale);
     }
 
     function drawRain(ctx, w, h, heavy, t) {
@@ -2056,7 +2218,7 @@
       pix(bctx, 0, 148, 118, 32, "#b08a52");
       pix(bctx, 110, 138, 40, 16, "#8aa8a0");
 
-      const pose = G.fish ? "fight" : G.lureIn ? "cast" : "idle";
+      const pose = G.fish ? "fight" : (G.lureIn || G.castWindup) ? "cast" : "idle";
       const bob = G.bill.onRock >= 0 ? 124 - G.boulders[G.bill.onRock].h - 24 : (G.bill.x > 128 ? 118 + Math.sin(t * 6) * 2 : 128);
       const bx = G.bill.x;
       if (G.bill.splash > 0) {
@@ -2064,18 +2226,47 @@
       }
       drawBill(bctx, bx, bob, 1, pose);
 
-      if (G.lureIn) {
-        bctx.strokeStyle = "#c8c0a8";
+      if (G.castWindup) {
+        const pwr = calcCastPower(G.castChargeT);
+        const aim = castLanding(pwr, G.castAimH, G.castAimV);
+        bctx.strokeStyle = "rgba(232,197,71,0.55)";
         bctx.lineWidth = 1;
+        bctx.setLineDash([3, 3]);
+        bctx.beginPath();
+        bctx.moveTo(bx + 18, bob + 4);
+        bctx.lineTo(aim.x, aim.y);
+        bctx.stroke();
+        bctx.setLineDash([]);
+        pix(bctx, aim.x, aim.y, 3, 3, "#e8c547");
+        const barX = bx + 26;
+        const barY = bob - 46;
+        const barH = 44;
+        const barW = 8;
+        pix(bctx, barX, barY, barW, barH, "rgba(0,0,0,0.55)");
+        pix(bctx, barX, barY, barW, 7, "rgba(111,191,115,0.45)");
+        const fillH = Math.max(2, Math.floor(barH * pwr));
+        pix(bctx, barX + 1, barY + barH - fillH, barW - 2, fillH, pwr >= 0.92 && pwr <= 1 ? "#6fbf73" : "#e8c547");
+        bctx.fillStyle = "#efe6d0";
+        bctx.font = "6px 'Press Start 2P', monospace";
+        bctx.fillText(Math.round(pwr * 100) + "%", barX - 2, barY - 4);
+      }
+
+      if (G.lureIn || G.fish) {
+        bctx.strokeStyle = G.fish ? "#e8d8a8" : "#c8c0a8";
+        bctx.lineWidth = G.fish ? 2 : 1;
         bctx.beginPath();
         bctx.moveTo(bx + 18, bob + 4);
         bctx.lineTo(G.lureX, G.lureY);
         bctx.stroke();
         const lc = COLORS.find((c) => c.id === G.color).hex;
-        pix(bctx, G.lureX, G.lureY, 4, 3, G.lureWeed || G.snagged ? "#3a5a28" : lc);
+        if (G.fish) {
+          drawBassOnLure(bctx, G.lureX, G.lureY, G.fish.inch, G.fish.fight);
+          pix(bctx, G.lureX - 1, G.lureY, 3, 3, lc);
+        } else {
+          pix(bctx, G.lureX, G.lureY, 4, 3, G.lureWeed || G.snagged ? "#3a5a28" : lc);
+        }
       }
-      if (G.fish) drawBass(bctx, G.fish.x, G.fish.y);
-      if (G.threat) drawCreature(bctx, G.threat.x, 120, G.threat.kind);
+      if (G.threat) drawCreature(bctx, G.threat.x, G.lureY - 6, G.threat.kind);
       G.particles.forEach((pt) => pix(bctx, pt.x, pt.y, 2, 2, pt.c));
       bctx.restore();
 
@@ -2353,9 +2544,10 @@
     };
     $("btn-talk").onclick = () => startTalk();
     $("talk").onclick = () => { if (G.talking && G.talkDone) finishTalk(); };
-    $("btn-map").onclick = () => { G.view = "map"; G.lureIn = false; G.fish = null; };
+    $("btn-map").onclick = () => { cancelCastWindup(); G.view = "map"; G.lureIn = false; G.fish = null; };
     $("btn-pause").onclick = () => {
       G.paused = !G.paused;
+      if (G.paused) cancelCastWindup();
       toast(G.paused ? "PAUSED" : "BACK ON THE CLOCK");
       $("btn-pause").textContent = G.paused ? "RESUME" : "PAUSE";
     };
@@ -2407,7 +2599,10 @@
         keys.down = true;
       }
       if (k === " ") {
-        if (!keys.space) keys.spaceTap = true;
+        if (!keys.space) {
+          keys.spaceTap = true;
+          if (canCastWindup()) beginCastWindup();
+        }
         keys.space = true;
       }
       if (k === "1" || k === "2" || k === "3" || k === "4") {
@@ -2432,15 +2627,22 @@
       if (k === "arrowright" || k === "d") keys.right = false;
       if (k === "arrowup" || k === "w") keys.up = false;
       if (k === "arrowdown" || k === "s") keys.down = false;
-      if (k === " ") keys.space = false;
+      if (k === " ") {
+        keys.space = false;
+        if (G.castWindup) releaseCast();
+      }
     });
 
     document.querySelectorAll("#touch [data-k]").forEach((btn) => {
       const set = (on) => {
         const k = btn.getAttribute("data-k");
         if (k === "space") {
-          if (on && !keys.space) keys.spaceTap = true;
+          if (on && !keys.space) {
+            keys.spaceTap = true;
+            if (canCastWindup()) beginCastWindup();
+          }
           keys.space = on;
+          if (!on && G.castWindup) releaseCast();
         } else {
           if (on && !keys[k]) keys[k + "Tap"] = true;
           keys[k] = on;
@@ -2452,6 +2654,7 @@
     });
 
     window.addEventListener("blur", () => {
+      if (G.castWindup) cancelCastWindup();
       keys.left = keys.right = keys.up = keys.down = keys.space = false;
     });
 

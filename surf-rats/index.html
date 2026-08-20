@@ -629,7 +629,9 @@
     const SURF_W = 320, SURF_H = 180;
     const UFO_CHANCE = 0.5;
     const ALIEN_BASS_INCH = 50;
-    const ALIEN_GIFT_COUNT = 10;
+    const ALIEN_BASS_CATCH_CHANCE = 0.18;
+    const ALIEN_MSG =
+      "We come in peace. Please don't tell anybody we've dropped 10 50 lb. stripers in the area.";
     const TRIP_GAME_HOURS = 6;
     const REAL_SECONDS_PER_GAME_HOUR = 120; // 2 real minutes = 1 game hour
     const GAME_MIN_PER_REAL_SEC = 60 / REAL_SECONDS_PER_GAME_HOUR;
@@ -801,7 +803,8 @@
       castChargeT: 0,
       castAimH: 0,
       castAimV: 0.5,
-      ufo: null
+      ufo: null,
+      alienSpot: -1
     };
 
     function mulberry(seed) {
@@ -1366,6 +1369,7 @@
       G.spotIndex = 18;
       G.travel = null;
       G.ufo = null;
+      G.alienSpot = -1;
       G.paused = false;
       G.talking = false;
       G.view = "map";
@@ -1463,6 +1467,7 @@
 
     function fishSize() {
       const tb = timeBucket(G.hour);
+      if (G.alienSpot === G.spotIndex && G.rng() < ALIEN_BASS_CATCH_CHANCE) return ALIEN_BASS_INCH;
       let cow = 0.08 + (G.month >= 9 ? 0.12 : 0);
       if (G.bill.onRock === 2) cow += 0.08;
       if (tb === "night") cow += 0.04;
@@ -1606,23 +1611,13 @@
       beep(880, 0.07); beep(660, 0.1); setTimeout(() => beep(990, 0.12), 120);
     }
 
-    function grantAlienBass() {
-      const inch = ALIEN_BASS_INCH;
-      const pts = pointsFor(inch);
-      G.score += pts;
-      G.landed += 1;
-      G.biggest = Math.max(G.biggest, inch);
-      G.catches.push({ inch, spot: currentSpot().name, lure: G.lure });
-      recordCatch(inch, currentSpot().name);
-    }
-
     function tryUfoEncounter() {
-      if (G.ufo || G.rng() >= UFO_CHANCE) return;
+      if (G.ufo || G.alienSpot === G.spotIndex || G.rng() >= UFO_CHANCE) return;
       cancelCastWindup();
       G.lureIn = false;
       G.fish = null;
       G.threat = null;
-      G.ufo = { phase: "in", t: 0, granted: 0, beamCd: 0 };
+      G.ufo = { phase: "in", t: 0, said: false };
       if (G.view !== "surf") {
         G.view = "surf";
         resetBill();
@@ -1639,19 +1634,29 @@
       u.t += dt;
       if (u.phase === "in") {
         if (u.t >= 1.6) {
+          u.phase = "say";
+          u.t = 0;
+        }
+        return;
+      }
+      if (u.phase === "say") {
+        if (!u.said) {
+          u.said = true;
+          log('VISITORS: "' + ALIEN_MSG + '"', "good");
+          toast("WE COME IN PEACE");
+        }
+        if (u.t >= 3.8) {
           u.phase = "beam";
           u.t = 0;
-          u.beamCd = 0;
+          G.alienSpot = G.spotIndex;
         }
         return;
       }
       if (u.phase === "beam") {
-        u.beamCd -= dt;
-        while (u.beamCd <= 0 && u.granted < ALIEN_GIFT_COUNT) {
-          grantAlienBass();
-          u.granted += 1;
-          u.beamCd += 0.22;
-          beep(520 + u.granted * 40, 0.06, "sine", 0.03);
+        if (u.rngDrop == null) u.rngDrop = 0;
+        u.rngDrop += dt;
+        while (u.rngDrop >= 0.12) {
+          u.rngDrop -= 0.12;
           G.particles.push({
             x: 158 + G.rng() * 8,
             y: 34 + G.rng() * 6,
@@ -1661,14 +1666,13 @@
             c: "#88ffaa"
           });
         }
-        if (u.granted >= ALIEN_GIFT_COUNT) {
+        if (u.t >= 1.1) {
           u.phase = "out";
           u.t = 0;
-          log("ALIENS GRANTED 10 × 50 LB STRIPERS — THEN THEY LEFT", "good");
-          toast("10 × 50 LB STRIPERS · RELEASED");
+          log("THE DISC LIFTS OFF — DON'T TELL ANYBODY", "good");
+          toast("50 LB BASS IN THE AREA");
           beep(330, 0.08, "sine", 0.05);
           setTimeout(() => beep(440, 0.1, "sine", 0.05), 90);
-          setTimeout(() => beep(660, 0.14, "sine", 0.05), 200);
         }
         return;
       }

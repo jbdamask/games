@@ -1183,13 +1183,22 @@
     }
 
     function markSchool(why) {
-      if (!G.school || G.school.active) return;
+      if (!G.school) rollSpotFish();
+      if (G.school.active) return;
       G.school.active = true;
       G.school.heat = 0.45 + G.rng() * 0.55;
       G.school.castsLeft = 2 + Math.floor(G.rng() * 3);
-      const msg = why === "luck" ? "BASS ROLLED IN CLOSE" : "MARKED FISH — STAY ON IT";
+      const msg = why === "luck" ? "BASS ROLLED IN CLOSE" : why === "drop" ? "50 LB BASS IN THE AREA" : "MARKED FISH — STAY ON IT";
       log(msg, "good");
       toast(msg, 2.2);
+    }
+
+    function activateAlienDrop() {
+      if (!G.school) rollSpotFish();
+      G.school.active = true;
+      G.school.heat = 0.88 + G.rng() * 0.12;
+      G.school.castsLeft = 10;
+      G.school.probe = 1;
     }
 
     function schoolFade(msg) {
@@ -1507,8 +1516,10 @@
       const rainMul = rainFishMul();
       const tech = G.lureWeed ? 0.05 : clamp(G.techMul, 0.08, 1.55);
       const schoolMul = schoolBiteMul();
-      const perSec = 0.012 * monthBase * timeMul * rockMul * lureMul * spot.q * seaMul * rainMul * tech * tech * schoolMul;
-      const cap = G.school && G.school.active ? 0.16 : 0.028;
+      let alienMul = 1;
+      if (G.alienSpot === G.spotIndex && !(G.school && G.school.active)) alienMul = 2.5;
+      const perSec = 0.012 * monthBase * timeMul * rockMul * lureMul * spot.q * seaMul * rainMul * tech * tech * schoolMul * alienMul;
+      const cap = G.school && G.school.active ? 0.16 : (G.alienSpot === G.spotIndex ? 0.052 : 0.028);
       return 1 - Math.pow(1 - clamp(perSec, 0.0015, cap), dt);
     }
 
@@ -1570,7 +1581,7 @@
     }
 
     function canCastWindup() {
-      if (G.mode !== "game" || G.view !== "surf" || G.paused || G.talking) return false;
+      if (G.mode !== "game" || G.view !== "surf" || G.paused || G.talking || G.ufo) return false;
       if (G.bill.splash > 0 || G.travel || G.fish || G.lureIn) return false;
       const near = boulderAt(G.bill.x);
       if (G.bill.onRock < 0 && near >= 0 && G.bill.x > 150) return false;
@@ -1729,6 +1740,7 @@
           u.phase = "beam";
           u.t = 0;
           G.alienSpot = G.spotIndex;
+          activateAlienDrop();
         }
         return;
       }

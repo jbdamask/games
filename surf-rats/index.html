@@ -170,20 +170,14 @@
       color: var(--foam);
       margin: 8px 0 16px;
     }
-    .name-input {
-      width: 100%;
-      max-width: 360px;
+    .callsign {
       background: #101628;
-      color: var(--gold);
-      border: 3px solid #000;
-      padding: 10px 12px;
-      font-family: inherit;
-      font-size: 10px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      box-shadow: 4px 4px 0 #000;
+      padding: 12px;
+      font-size: 8px;
+      line-height: 1.9;
+      color: var(--foam);
+      margin-bottom: 4px;
     }
-    .name-input:focus { outline: 2px solid var(--gold); }
 
     /* GAME */
     #hud {
@@ -351,6 +345,19 @@
       line-height: 1.9;
     }
     .help h3 { color: var(--gold); margin-bottom: 10px; font-size: 10px; }
+    .charity-note {
+      color: var(--dim);
+      font-size: 7px;
+      line-height: 1.9;
+      margin-top: 10px;
+      text-align: center;
+    }
+    .charity-link {
+      color: var(--gold);
+      text-decoration: none;
+    }
+    .charity-link:hover { text-decoration: underline; }
+    .talk-charity { margin-top: 8px; font-size: 7px; color: var(--dim); text-align: center; }
 
     #talk {
       position: fixed;
@@ -416,16 +423,14 @@
           <button class="pixel-btn ghost" id="btn-trophy">TROPHY CASE</button>
           <button class="pixel-btn ghost" id="btn-how">HOW TO FISH</button>
         </div>
+        <p class="charity-note">Montauk Bill supports <a class="charity-link" href="https://kidsneedmore.org/" target="_blank" rel="noopener noreferrer">Kids Need More</a></p>
       </div>
     </section>
 
     <section id="screen-setup" class="screen">
       <div class="setup-card">
         <h2>PLAN THE TRIP</h2>
-        <div class="field">
-          <label>YOUR NAME</label>
-          <input id="name-input" class="name-input" type="text" maxlength="12" autocomplete="off" spellcheck="false" placeholder="SURF RAT" />
-        </div>
+        <div class="callsign">BEACH CALLSIGN DRAWN AT LAUNCH — GOOGIN · HERB · DANGLER · SPOTBURN</div>
         <div class="field">
           <label>MONTH</label>
           <div class="chip-row" id="month-row"></div>
@@ -523,7 +528,8 @@
   <div class="help" id="help">
     <div class="box">
       <h3>HOW TO FISH MONTAUK</h3>
-      <p>You type your name. Montauk Bill already knows every hole. Outfish him before the trip clock dies.</p>
+      <p>You draw a beach callsign — Googin, Herb, Dangler, or Spotburn. Montauk Bill already knows every hole. Outfish him before the trip clock dies.</p>
+      <p>Storms roll in sometimes. Light rain can wake the bass up. A downpour can be hot — but lightning follows. Distant strikes flash the screen; the closer the storm, the faster the flashes and the higher the chance you get hit on the rocks. Fish or flee.</p>
       <p>Walk the shore map and pick a spot, then hit FISH HERE. Gold B on the map is Montauk Bill. You cannot fish his hole. Talk to him — he may give you a tip — then he leaves.</p>
       <p>ARROWS / WASD move. UP wades out. DOWN comes in. SPACE casts, works the lure, climbs a boulder, or pumps a fish.</p>
       <p>Rocky spots have boulders. Wade out and climb. Waves shove you back. Stand too far back on the rock or too far out on a pointy peak and a big one can wash you off — lose the fish if you're still hooked up.</p>
@@ -532,6 +538,7 @@
       <p>Wind piles seaweed onto the onshore side. A fouled lure catches nothing. Change type (1–4) and color ([ ]) until something eats.</p>
       <p>When you hook up, pump the rod with SPACE. Too much heat snaps the line. Too little and a shark or seal may steal the bass. Points count only when you LAND the fish. Then you let it go.</p>
       <p>A trip is 6 hours. Two real minutes is one game hour. Click a map marker to hike the coast (hiking costs time).</p>
+      <p>Montauk Bill's favorite charity is <a class="charity-link" href="https://kidsneedmore.org/" target="_blank" rel="noopener noreferrer">Kids Need More</a> — kidsneedmore.org</p>
       <p style="margin-top:12px"><button class="pixel-btn" id="btn-help-close">GOT IT</button></p>
     </div>
   </div>
@@ -541,6 +548,7 @@
       <h3>MONTAUK BILL</h3>
       <img id="talk-face" src="bill-closed.png" alt="Montauk Bill" width="420" height="524" />
       <div id="talk-text"></div>
+      <p class="talk-charity">Bill's charity: <a class="charity-link" href="https://kidsneedmore.org/" target="_blank" rel="noopener noreferrer">Kids Need More</a></p>
       <p id="talk-cont" class="blink">PRESS SPACE / CLICK</p>
     </div>
   </div>
@@ -567,7 +575,7 @@
     const STARTER_BOX = { BUCKTAIL: 3, "PENCIL POPPER": 2, DARTER: 2, MINNOW: 2 };
     const LURE_SHORT = { BUCKTAIL: "BUCK", "PENCIL POPPER": "PENCIL", DARTER: "DARTER", MINNOW: "MINNOW" };
     const TROPHY_KEY = "surfrats-trophies";
-    const NAME_KEY = "surfrats-name";
+    const PLAYER_NAMES = ["GOOGIN", "HERB", "DANGLER", "SPOTBURN"];
     const TALK_CLOSED = "bill-closed.png";
     const TALK_OPEN = "bill-open.png";
     const COLORS = [
@@ -640,7 +648,6 @@
     const audio = { ctx: null, muted: false };
 
     const setup = {
-      name: "SURF RAT",
       month: 10,
       timeId: "dusk",
       lure: "BUCKTAIL",
@@ -704,9 +711,10 @@
       picky: {},
       mapHover: -1,
       weatherSlot: 0,
+      storm: { active: false, rain: 0, proximity: 0, flash: 0, flashCd: 10, warned: false },
       boulders: [],
       upHeld: false,
-      playerName: "SURF RAT",
+      playerName: "GOOGIN",
       rival: { spot: -1, score: 0, landed: 0, biggest: 0, nextMove: 50, nextCatch: 22, talks: 0 },
       talking: false,
       talkFull: "",
@@ -799,21 +807,114 @@
     function currentSpot() { return SPOTS[G.spotIndex]; }
 
     function playerName() {
-      return (G.playerName || "SURF RAT").toUpperCase();
+      return (G.playerName || "GOOGIN").toUpperCase();
     }
     function billHere() {
       return G.rival && G.rival.spot === G.spotIndex;
     }
-    function loadSavedName() {
-      try {
-        const n = (localStorage.getItem(NAME_KEY) || "").trim();
-        if (n) setup.name = n.slice(0, 12).toUpperCase();
-      } catch (e) {}
+    function pickPlayerName() {
+      return PLAYER_NAMES[Math.floor(Math.random() * PLAYER_NAMES.length)];
     }
-    function saveName(n) {
-      setup.name = (n || "SURF RAT").trim().slice(0, 12).toUpperCase() || "SURF RAT";
-      try { localStorage.setItem(NAME_KEY, setup.name); } catch (e) {}
-      return setup.name;
+    function resetStorm() {
+      G.storm = { active: false, rain: 0, proximity: 0, flash: 0, flashCd: 8 + G.rng() * 6, warned: false };
+    }
+    function rollSpotRain() {
+      if (!G.storm.active) {
+        G.storm.rain = 0;
+        return;
+      }
+      const r = G.rng();
+      if (r < 0.42) G.storm.rain = 1;
+      else if (r < 0.68) G.storm.rain = 2;
+      else G.storm.rain = 0;
+    }
+    function rainLabel() {
+      if (!G.storm.active) return "";
+      if (G.storm.rain === 1) return "DRIZZLE";
+      if (G.storm.rain === 2) return "DOWNPOUR";
+      return "STORM NEAR";
+    }
+    function rainFishMul() {
+      if (!G.storm.active) return 1;
+      if (G.storm.rain === 1) return 1.22;
+      if (G.storm.rain === 2) return 1.55;
+      return 1;
+    }
+    function rollStormFront() {
+      if (!G.storm.active) {
+        if (G.rng() < 0.3) {
+          G.storm.active = true;
+          G.storm.proximity = 0.06 + G.rng() * 0.14;
+          G.storm.flashCd = 6 + G.rng() * 8;
+          G.storm.warned = false;
+          rollSpotRain();
+          log("storm front moving in off the Atlantic", "warn");
+          if (G.storm.rain === 1) log("light rain at this hole — bass might chew", "good");
+          else if (G.storm.rain === 2) log("heavy rain — hot bite but watch the sky", "warn");
+          else log("distant thunder — rain may hit this hole soon", "warn");
+        }
+        return;
+      }
+      if (G.rng() < 0.14) {
+        G.storm.active = false;
+        G.storm.rain = 0;
+        G.storm.proximity = 0;
+        G.storm.warned = false;
+        log("storm passes east — sky breaks", "");
+        return;
+      }
+      rollSpotRain();
+      if (G.storm.rain === 2) log("rain hammers down — bass are feeding", "good");
+      else if (G.storm.rain === 1) log("light rain on the rocks", "");
+      else log("dry for now but thunder still rolls", "warn");
+    }
+    function lightningStrike() {
+      const s = G.storm;
+      s.flash = 0.5;
+      s.flashCd = 2.5 + G.rng() * 4;
+      G.shake = 0.9;
+      beep(48, 0.38, "sawtooth", 0.14, -35);
+      setTimeout(() => beep(28, 0.55, "sawtooth", 0.1), 90);
+      toast("LIGHTNING STRIKE");
+      log("LIGHTNING — GET OFF THE ROCKS", "bad");
+      if (G.fish) {
+        G.snapped += 1;
+        G.fish = null;
+        G.threat = null;
+        G.lureIn = false;
+        jingle(false);
+      }
+      if (G.bill.onRock >= 0) fallOffRock("knock");
+      else if (G.lureIn) retrieve(false);
+      s.proximity = Math.max(0.22, s.proximity * 0.55);
+      s.warned = false;
+    }
+    function updateStorm(dt) {
+      if (!G.storm.active) return;
+      const s = G.storm;
+      if (G.view === "surf" && !G.travel && !G.talking) {
+        const build = (s.rain === 2 ? 0.022 : s.rain === 1 ? 0.012 : 0.005) * dt;
+        s.proximity = clamp(s.proximity + build, 0, 1);
+      } else if (G.view === "map" && !G.travel) {
+        s.proximity = clamp(s.proximity + dt * 0.0015, 0, 1);
+      }
+      if (s.proximity > 0.1) {
+        s.flashCd -= dt;
+        if (s.flashCd <= 0) {
+          s.flash = 0.1 + G.rng() * 0.22;
+          s.flashCd = lerp(16, 2.2, s.proximity) + G.rng() * 2.5;
+          if (s.proximity > 0.5 && !s.warned) {
+            s.warned = true;
+            log("lightning's getting close — fish or flee", "warn");
+          }
+          beep(36 + G.rng() * 24, 0.12, "sawtooth", 0.035);
+        }
+      }
+      if (G.view === "surf" && !G.travel && s.proximity > 0.18) {
+        const perSec = 0.004 + s.proximity * s.proximity * 0.14;
+        if (G.rng() < perSec * dt) lightningStrike();
+      }
+      if (s.flash > 0) s.flash -= dt;
     }
     function pickBillSpot(avoid) {
       const dest = G.travel ? G.travel.path[G.travel.path.length - 1] : -1;
@@ -949,6 +1050,13 @@
       G.windDir = WINDS[Math.floor(r() * WINDS.length)];
       G.windKts = Math.floor(6 + r() * 22);
       G.tide = r() > 0.5 ? "FLOOD" : "EBB";
+      resetStorm();
+      if (G.rng() < 0.24) {
+        G.storm.active = true;
+        G.storm.proximity = 0.05 + G.rng() * 0.1;
+        G.storm.flashCd = 7 + G.rng() * 7;
+        rollSpotRain();
+      }
     }
 
     function log(msg, cls = "") {
@@ -1083,7 +1191,7 @@
     }
 
     function startTrip() {
-      G.playerName = saveName($("name-input").value);
+      G.playerName = pickPlayerName();
       G.seed = (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0;
       G.rng = mulberry(G.seed);
       G.month = setup.month;
@@ -1114,6 +1222,11 @@
       resetBill();
       G.rival.spot = pickBillSpot(-1);
       log(playerName() + " hits the rocks. Wind " + G.windDir + " " + G.windKts + ".");
+      if (G.storm.active) {
+        if (G.storm.rain === 2) log("storm already hammering — bass should eat", "good");
+        else if (G.storm.rain === 1) log("drizzle on the launch — fish may turn on", "good");
+        else log("thunder in the distance — storm building", "warn");
+      }
       log("Montauk Bill is already on " + SPOTS[G.rival.spot].name + ". Outfish him.", "warn");
       toast("OUTFISH MONTAUK BILL");
       showScreen("screen-game");
@@ -1175,7 +1288,8 @@
       }
       const sea = seas(spot);
       const seaMul = sea > 3.4 ? 0.7 : sea > 1.2 ? 1.1 : 0.9;
-      const perSec = 0.055 * monthBase * timeMul * rockMul * lureMul * spot.q * seaMul * G.techMul;
+      const rainMul = rainFishMul();
+      const perSec = 0.055 * monthBase * timeMul * rockMul * lureMul * spot.q * seaMul * rainMul * G.techMul;
       return 1 - Math.pow(1 - clamp(perSec, 0.008, 0.32), dt);
     }
 
@@ -1672,6 +1786,7 @@
       const slot = Math.floor(G.elapsedMin / 75);
       if (slot > 0 && slot !== G.weatherSlot) {
         G.weatherSlot = slot;
+        rollStormFront();
         if (G.rng() < 0.55) {
           const i = WINDS.indexOf(G.windDir);
           G.windDir = WINDS[(i + (G.rng() < 0.5 ? 1 : -1) + 8) % 8];
@@ -1705,6 +1820,11 @@
           G.hour = G.startHour + G.elapsedMin / 60;
           G.spotIndex = G.travel.path[G.travel.path.length - 1];
           resetBill();
+          if (G.storm.active) {
+            rollSpotRain();
+            G.storm.proximity = Math.max(0.05, G.storm.proximity * 0.72);
+            G.storm.warned = false;
+          }
           log("on station: " + currentSpot().name);
           G.travel = null;
           refreshSpotButtons();
@@ -1722,6 +1842,7 @@
       keys.rightTap = false;
 
       if (G.view === "surf" && !G.travel) updateSurf(dt);
+      updateStorm(dt);
       if (G.toastT > 0) {
         G.toastT -= dt;
         if (G.toastT <= 0) { G.toast = ""; $("toast").textContent = ""; }
@@ -1744,9 +1865,10 @@
     function hud() {
       const spot = currentSpot();
       const col = COLORS.find((c) => c.id === G.color);
+      const wx = rainLabel();
       $("hud-left").textContent = `${playerName()}  ${G.score}   BILL ${G.rival.score}`;
       $("hud-center").textContent = `${clockString(G.hour)}   ${timeBucket(G.hour).toUpperCase()}   LEFT ${remaining()}`;
-      $("hud-right").textContent = `WIND ${G.windDir} ${G.windKts}   ${G.tide}`;
+      $("hud-right").textContent = `WIND ${G.windDir} ${G.windKts}   ${G.tide}${wx ? "   " + wx : ""}`;
       const billLine = billHere()
         ? `<span style="color:#e8c547">MONTAUK BILL IS HERE — YOU CAN'T FISH THIS HOLE. TALK TO HIM.</span><br>`
         : (G.rival.spot >= 0 ? `BILL LAST SEEN · ${SPOTS[G.rival.spot].name}<br>` : "");
@@ -1754,6 +1876,11 @@
         `<b style="color:#efe6d0">${spot.name}</b><br>` +
         `${spot.side.toUpperCase()} SIDE · ${spot.rocky ? "BOULDER FIELD" : "SAND / COBBLE"}<br>` +
         billLine +
+        (G.storm.active && G.storm.rain === 2
+          ? `<span style="color:#8ec5ff">DOWNPOUR — HOT BITE · LIGHTNING RISK</span><br>`
+          : (G.storm.active && G.storm.rain === 1
+            ? `<span style="color:#8ec5ff">DRIZZLE — FISH MAY CHEW</span><br>`
+            : (G.storm.active ? `<span style="color:#8ec5ff">STORM NEAR — WATCH THE SKY</span><br>` : ""))) +
           `${G.view === "surf" ? "SURF VIEW — arrows + space" : "MAP — click or ← → then FISH HERE"}<br>` +
         `${col.name} ${G.lure}  ·  BOX ${boxLeft()}`;
     }
@@ -1824,17 +1951,36 @@
       pix(ctx, x + 6, y + 4, 8, 2, "#c8d8c0");
     }
 
+    function drawRain(ctx, w, h, heavy, t) {
+      const n = heavy ? 70 : 38;
+      ctx.fillStyle = heavy ? "rgba(160,190,230,0.55)" : "rgba(180,200,230,0.35)";
+      for (let i = 0; i < n; i++) {
+        const sx = ((i * 37 + Math.floor(t * 120)) % w);
+        const sy = ((i * 53 + Math.floor(t * 90)) % h);
+        ctx.fillRect(sx, sy, 1, heavy ? 5 : 3);
+        ctx.fillRect((sx + 2) % w, (sy + 4) % h, 1, heavy ? 4 : 2);
+      }
+    }
+    function drawLightningFlash(ctx, w, h, alpha) {
+      if (alpha <= 0) return;
+      ctx.fillStyle = "rgba(240,248,255," + clamp(alpha, 0, 0.92) + ")";
+      ctx.fillRect(0, 0, w, h);
+    }
+
     function drawSurf() {
       const p = pal();
       const t = performance.now() / 1000;
+      const stormy = G.storm.active;
+      const rain = G.storm.rain;
       bctx.imageSmoothingEnabled = false;
       bctx.fillStyle = p.sky1;
       bctx.fillRect(0, 0, SURF_W, SURF_H);
       const g = bctx.createLinearGradient(0, 0, 0, 90);
-      g.addColorStop(0, p.sky1);
-      g.addColorStop(1, p.sky2);
+      g.addColorStop(0, stormy ? (rain === 2 ? "#1a2438" : "#243048") : p.sky1);
+      g.addColorStop(1, stormy ? (rain === 2 ? "#2a3548" : "#3a4558") : p.sky2);
       bctx.fillStyle = g;
       bctx.fillRect(0, 0, SURF_W, 92);
+      if (rain > 0) drawRain(bctx, SURF_W, SURF_H, rain === 2, t);
       if (p.night) {
         for (let i = 0; i < 18; i++) {
           const sx = (i * 47 + 13) % SURF_W;
@@ -1903,6 +2049,7 @@
       bctx.fillStyle = "#e8c547";
       bctx.font = "8px 'Press Start 2P', monospace";
       bctx.fillText(currentSpot().name, 8, 18);
+      if (G.storm.flash > 0) drawLightningFlash(bctx, SURF_W, SURF_H, G.storm.flash * 2.8);
     }
 
     function mapLayout() {
@@ -1919,6 +2066,16 @@
       vctx.fillStyle = "#0a1020";
       vctx.fillRect(0, 0, viewCss().w, viewCss().h);
       vctx.drawImage(mapImg, ox, oy, dw, dh);
+      if (G.storm.active && G.storm.rain > 0) {
+        vctx.save();
+        vctx.beginPath();
+        vctx.rect(ox, oy, dw, dh);
+        vctx.clip();
+        drawRain(vctx, viewCss().w, viewCss().h, G.storm.rain === 2, performance.now() / 1000);
+        vctx.fillStyle = G.storm.rain === 2 ? "rgba(20,30,50,0.28)" : "rgba(30,40,60,0.16)";
+        vctx.fillRect(ox, oy, dw, dh);
+        vctx.restore();
+      }
       const h = ((G.hour % 24) + 24) % 24;
       if (h >= 20 || h < 5.5) {
         vctx.fillStyle = "rgba(8,12,32,0.42)";
@@ -1958,6 +2115,7 @@
       vctx.fillStyle = "#efe6d0";
       vctx.font = "10px 'Press Start 2P', monospace";
       vctx.fillText(s.name, ox + 12, oy + dh - 14);
+      if (G.storm.flash > 0) drawLightningFlash(vctx, viewCss().w, viewCss().h, G.storm.flash * 2.2);
       vctx.restore();
     }
 
@@ -1975,6 +2133,7 @@
       vctx.fillRect(0, 0, w, h);
       vctx.imageSmoothingEnabled = false;
       vctx.drawImage(buf, ox, oy, dw, dh);
+      if (G.storm.flash > 0) drawLightningFlash(vctx, w, h, G.storm.flash * 2.4);
     }
 
     function viewCss() {
@@ -2020,14 +2179,15 @@
       chips($("time-row"), TIMES, (t) => t.id, (t) => t.name, setup.timeId, (id) => { setup.timeId = id; renderSetup(); });
       chips($("lure-row"), LURES, (l) => l, (l) => l, setup.lure, (id) => { setup.lure = id; renderSetup(); });
       chips($("color-row"), COLORS, (c) => c.id, (c) => c.name, setup.color, (id) => { setup.color = id; renderSetup(); });
-      $("name-input").value = setup.name;
       const demoSeed = hash(setup.month + setup.timeId);
       const r = mulberry(demoSeed);
       const dir = WINDS[Math.floor(r() * 8)];
       const kts = 8 + Math.floor(r() * 18);
+      const stormHint = r() > 0.72 ? "STORMS POSSIBLE — RAIN CAN FIRE THE BITE · LIGHTNING KILLS" : "FAIR SKY LIKELY · STORMS STILL POSSIBLE";
       $("forecast").innerHTML =
         `FORECAST (variable during the trip)<br>` +
         `WIND STARTS ${dir} AT ${kts} KTS<br>` +
+        `${stormHint}<br>` +
         `TIDE WILL SWING FLOOD / EBB<br>` +
         `SEAWEED FOLLOWS ONSHORE WIND<br>` +
         `BOX: 3 BUCKTAILS · 2 POPPERS · 2 DARTERS · 2 MINNOWS<br>` +
@@ -2148,6 +2308,11 @@
       if (G.view !== "surf") {
         G.view = "surf";
         resetBill();
+        if (G.storm.active) {
+          rollSpotRain();
+          G.storm.proximity = Math.max(0.05, G.storm.proximity * 0.85);
+          G.storm.warned = false;
+        }
         toast(currentSpot().rocky ? "WADE OUT · CLIMB · CAST" : "CAST FROM THE WASH");
       }
     };
@@ -2255,7 +2420,6 @@
       keys.left = keys.right = keys.up = keys.down = keys.space = false;
     });
 
-    loadSavedName();
     resize();
     requestAnimationFrame(loop);
   })();

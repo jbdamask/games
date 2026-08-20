@@ -495,14 +495,16 @@
       margin-bottom: 10px;
       letter-spacing: 2px;
     }
-    #alien-talk-ufo {
-      display: block;
-      margin: 0 auto 12px;
+    #alien-talk-face {
+      width: min(280px, 62vw);
+      height: auto;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
-      border: 3px solid #000;
+      border: 4px solid #000;
       box-shadow: 4px 4px 0 #000;
       background: #070b14;
+      display: block;
+      margin: 0 auto 12px;
     }
     #alien-talk-text {
       min-height: 96px;
@@ -671,7 +673,7 @@
   <div id="alien-talk">
     <div class="talk-box alien-talk-box">
       <h3>VISITORS</h3>
-      <canvas id="alien-talk-ufo" width="80" height="48"></canvas>
+      <img id="alien-talk-face" src="alien-montauk.png" alt="Visitors from Montauk" width="280" height="280" />
       <div id="alien-talk-text"></div>
     </div>
   </div>
@@ -680,7 +682,7 @@
   (() => {
     const MAP_W = 1100, MAP_H = 850;
     const SURF_W = 320, SURF_H = 180;
-    const UFO_CHANCE = 0.01;
+    const UFO_CHANCE = 0.5;
     const ALIEN_BASS_INCH = 50;
     const ALIEN_BASS_CATCH_CHANCE = 0.18;
     const ALIEN_MSG =
@@ -1667,12 +1669,7 @@
     function openAlienTalk() {
       $("alien-talk").classList.add("on");
       $("alien-talk-text").textContent = "";
-      const c = $("alien-talk-ufo");
-      const ctx = c.getContext("2d");
-      ctx.imageSmoothingEnabled = false;
-      ctx.fillStyle = "#070b14";
-      ctx.fillRect(0, 0, c.width, c.height);
-      drawUfo(ctx, 40, 22);
+      $("alien-talk-face").src = "alien-montauk.png";
     }
     function closeAlienTalk() {
       $("alien-talk").classList.remove("on");
@@ -1688,12 +1685,6 @@
         if (ch !== " ") beep(520 + (u.sayShown % 5) * 28, 0.014, "sine", 0.018);
       }
       $("alien-talk-text").textContent = ALIEN_MSG.slice(0, u.sayShown);
-      const c = $("alien-talk-ufo");
-      const ctx = c.getContext("2d");
-      ctx.imageSmoothingEnabled = false;
-      ctx.fillStyle = "#070b14";
-      ctx.fillRect(0, 0, c.width, c.height);
-      drawUfo(ctx, 40, 22 + Math.sin(performance.now() / 140) * 2);
       if (u.sayShown >= ALIEN_MSG.length) u.sayDone = true;
     }
 

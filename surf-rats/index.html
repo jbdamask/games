@@ -230,6 +230,20 @@
       width: 90%;
       line-height: 1.6;
     }
+    #map-tooltip {
+      display: none;
+      position: absolute;
+      pointer-events: none;
+      z-index: 6;
+      background: #0a1020;
+      border: 2px solid #efe6d0;
+      color: #efe6d0;
+      font-size: 8px;
+      padding: 5px 7px;
+      line-height: 1.5;
+      white-space: nowrap;
+      box-shadow: 4px 4px 0 #000;
+    }
     #side {
       background: var(--panel);
       border-left: 4px solid #000;
@@ -514,6 +528,7 @@
       <div id="game-wrap">
         <div id="view-wrap">
           <canvas id="view"></canvas>
+          <div id="map-tooltip"></div>
           <div id="toast"></div>
         </div>
         <aside id="side">
@@ -656,36 +671,36 @@
       { name: "Oyster Pond Cove", x: 768, y: 258, side: "north", rocky: false, q: 1.0 },
       { name: "Stepping Stones", x: 818, y: 288, side: "north", rocky: true, q: 1.12 },
       { name: "Clark's Cove", x: 848, y: 308, side: "north", rocky: false, q: 1.05 },
-      { name: "North Bar", x: 878, y: 328, side: "north", rocky: true, q: 1.35 },
-      { name: "Burning Bush", x: 904, y: 348, side: "north", rocky: true, q: 1.1 },
-      { name: "False Bar", x: 924, y: 368, side: "north", rocky: true, q: 1.3 },
-      { name: "Evans Rock", x: 944, y: 392, side: "north", rocky: true, q: 1.15 },
-      { name: "Jones Reef", x: 958, y: 418, side: "north", rocky: true, q: 1.22 },
-      { name: "The Delta", x: 968, y: 438, side: "east", rocky: true, q: 1.1 },
-      { name: "Bluffs", x: 976, y: 456, side: "east", rocky: true, q: 1.18 },
-      { name: "Scott's", x: 980, y: 470, side: "east", rocky: true, q: 1.12 },
-      { name: "Montauk Point", x: 986, y: 486, side: "east", rocky: true, q: 1.4 },
-      { name: "Pill Box", x: 968, y: 508, side: "south", rocky: true, q: 1.1 },
-      { name: "Turtle Cove", x: 942, y: 528, side: "south", rocky: true, q: 1.38 },
-      { name: "Brown's", x: 918, y: 548, side: "south", rocky: true, q: 1.2 },
-      { name: "Sewer", x: 898, y: 578, side: "south", rocky: true, q: 1.18 },
-      { name: "Rat Hole", x: 878, y: 608, side: "south", rocky: true, q: 1.32 },
-      { name: "King's Point", x: 856, y: 634, side: "south", rocky: true, q: 1.25 },
-      { name: "Alien Rock", x: 836, y: 654, side: "south", rocky: true, q: 1.15 },
-      { name: "Driftwood Cove", x: 816, y: 668, side: "south", rocky: false, q: 1.0 },
-      { name: "Stone House", x: 796, y: 678, side: "south", rocky: true, q: 1.08 },
-      { name: "Caswell's", x: 766, y: 688, side: "south", rocky: true, q: 1.28 },
-      { name: "Tea House", x: 718, y: 694, side: "south", rocky: true, q: 1.1 },
-      { name: "Coconuts", x: 668, y: 700, side: "south", rocky: true, q: 1.12 },
-      { name: "Cottages", x: 618, y: 706, side: "south", rocky: false, q: 0.95 },
-      { name: "Morgan's Cove", x: 568, y: 712, side: "south", rocky: false, q: 0.98 },
-      { name: "Frisbie's", x: 518, y: 722, side: "south", rocky: true, q: 1.08 },
-      { name: "Cavit's Cove", x: 468, y: 732, side: "south", rocky: false, q: 0.95 },
-      { name: "Dragon's Rock", x: 398, y: 742, side: "south", rocky: true, q: 1.1 },
-      { name: "Ditch Plains", x: 298, y: 752, side: "south", rocky: false, q: 0.9 },
-      { name: "Indians", x: 218, y: 760, side: "south", rocky: false, q: 0.88 },
-      { name: "Dead Man's", x: 158, y: 766, side: "south", rocky: false, q: 0.9 },
-      { name: "Town Beaches", x: 98, y: 772, side: "south", rocky: false, q: 0.85 }
+      { name: "North Bar", x: 898, y: 342, side: "north", rocky: true, q: 1.35 },
+      { name: "Burning Bush", x: 912, y: 352, side: "north", rocky: true, q: 1.1 },
+      { name: "False Bar", x: 922, y: 368, side: "north", rocky: true, q: 1.3 },
+      { name: "Evans Rock", x: 936, y: 388, side: "north", rocky: true, q: 1.15 },
+      { name: "Jones Reef", x: 952, y: 408, side: "north", rocky: true, q: 1.22 },
+      { name: "The Delta", x: 964, y: 424, side: "east", rocky: true, q: 1.1 },
+      { name: "Bluffs", x: 974, y: 442, side: "east", rocky: true, q: 1.18 },
+      { name: "Scott's", x: 982, y: 458, side: "east", rocky: true, q: 1.12 },
+      { name: "Montauk Point", x: 992, y: 478, side: "east", rocky: true, q: 1.4 },
+      { name: "Pill Box", x: 988, y: 498, side: "south", rocky: true, q: 1.1 },
+      { name: "Turtle Cove", x: 972, y: 518, side: "south", rocky: true, q: 1.38 },
+      { name: "Brown's", x: 948, y: 538, side: "south", rocky: true, q: 1.2 },
+      { name: "Sewer", x: 928, y: 562, side: "south", rocky: true, q: 1.18 },
+      { name: "Rat Hole", x: 908, y: 588, side: "south", rocky: true, q: 1.32 },
+      { name: "King's Point", x: 886, y: 612, side: "south", rocky: true, q: 1.25 },
+      { name: "Alien Rock", x: 866, y: 634, side: "south", rocky: true, q: 1.15 },
+      { name: "Driftwood Cove", x: 846, y: 652, side: "south", rocky: false, q: 1.0 },
+      { name: "Stone House", x: 824, y: 668, side: "south", rocky: true, q: 1.08 },
+      { name: "Caswell's", x: 792, y: 682, side: "south", rocky: true, q: 1.28 },
+      { name: "Tea House", x: 748, y: 692, side: "south", rocky: true, q: 1.1 },
+      { name: "Coconuts", x: 698, y: 698, side: "south", rocky: true, q: 1.12 },
+      { name: "Cottages", x: 648, y: 704, side: "south", rocky: false, q: 0.95 },
+      { name: "Morgan's Cove", x: 598, y: 710, side: "south", rocky: false, q: 0.98 },
+      { name: "Frisbie's", x: 548, y: 718, side: "south", rocky: true, q: 1.08 },
+      { name: "Cavit's Cove", x: 498, y: 726, side: "south", rocky: false, q: 0.95 },
+      { name: "Dragon's Rock", x: 428, y: 736, side: "south", rocky: true, q: 1.1 },
+      { name: "Ditch Plains", x: 328, y: 746, side: "south", rocky: false, q: 0.9 },
+      { name: "Indians", x: 248, y: 754, side: "south", rocky: false, q: 0.88 },
+      { name: "Dead Man's", x: 178, y: 762, side: "south", rocky: false, q: 0.9 },
+      { name: "Town Beaches", x: 108, y: 768, side: "south", rocky: false, q: 0.85 }
     ];
 
     const $ = (id) => document.getElementById(id);
@@ -2368,11 +2383,13 @@
       if (G.storm.flash > 0) drawLightningFlash(bctx, SURF_W, SURF_H, G.storm.flash * 2.8);
     }
 
-    function mapSpotPick(mx, my, maxDist) {
+    function mapSpotPickCanvas(px, py, maxPx, layout) {
       let best = -1;
-      let bestD = maxDist;
+      let bestD = maxPx;
       SPOTS.forEach((s, i) => {
-        const d = dist(s.x, s.y, mx, my);
+        const sx = layout.ox + s.x * layout.scale;
+        const sy = layout.oy + s.y * layout.scale;
+        const d = dist(sx, sy, px, py);
         if (d < bestD) {
           bestD = d;
           best = i;
@@ -2381,41 +2398,42 @@
       return best;
     }
 
-    function drawMapTooltip(vctx, x, y, label, bounds) {
-      vctx.font = "8px 'Press Start 2P', monospace";
-      const pad = 4;
-      const tw = vctx.measureText(label).width;
-      const boxW = Math.ceil(tw + pad * 2);
-      const boxH = 14;
-      const candidates = [
-        { tx: x + 10, ty: y - boxH - 6 },
-        { tx: x - boxW - 10, ty: y - boxH - 6 },
-        { tx: x + 10, ty: y + 10 },
-        { tx: x - boxW - 10, ty: y + 10 },
-        { tx: x - boxW / 2, ty: y - boxH - 12 }
-      ];
-      let tx = candidates[0].tx;
-      let ty = candidates[0].ty;
-      for (const c of candidates) {
-        if (c.tx >= bounds.left + 4 && c.ty >= bounds.top + 4 &&
-            c.tx + boxW <= bounds.right - 4 && c.ty + boxH <= bounds.bottom - 4) {
-          tx = c.tx;
-          ty = c.ty;
-          break;
-        }
+    function mapMarkerPos(i, layout) {
+      const s = SPOTS[i];
+      return {
+        x: layout.ox + s.x * layout.scale,
+        y: layout.oy + s.y * layout.scale
+      };
+    }
+
+    function hideMapTooltip() {
+      const tip = $("map-tooltip");
+      if (tip) tip.style.display = "none";
+    }
+
+    function updateMapTooltip(layout) {
+      const tip = $("map-tooltip");
+      if (!tip || G.view !== "map" || G.mapHover < 0 || G.mapHover === G.spotIndex) {
+        hideMapTooltip();
+        return;
       }
-      vctx.strokeStyle = "#000";
-      vctx.lineWidth = 1;
-      vctx.beginPath();
-      vctx.moveTo(x, y);
-      vctx.lineTo(clamp(tx + boxW * 0.25, x - 12, x + 12), ty + boxH);
-      vctx.stroke();
-      vctx.fillStyle = "#0a1020";
-      vctx.fillRect(tx, ty, boxW, boxH);
-      vctx.strokeStyle = "#efe6d0";
-      vctx.strokeRect(tx, ty, boxW, boxH);
-      vctx.fillStyle = "#efe6d0";
-      vctx.fillText(label, tx + pad, ty + boxH - 4);
+      const s = SPOTS[G.mapHover];
+      const p = mapMarkerPos(G.mapHover, layout);
+      const label = G.mapHover === G.rival.spot ? s.name + " · BILL" : s.name;
+      tip.textContent = label;
+      tip.style.display = "block";
+      tip.style.visibility = "hidden";
+      const tw = tip.offsetWidth;
+      const th = tip.offsetHeight;
+      const gap = 8;
+      let left = p.x - tw / 2;
+      let top = p.y - th - gap;
+      left = clamp(left, layout.ox + 4, layout.ox + layout.dw - tw - 4);
+      if (top < layout.oy + 4) top = p.y + gap;
+      top = clamp(top, layout.oy + 4, layout.oy + layout.dh - th - 4);
+      tip.style.left = Math.round(left) + "px";
+      tip.style.top = Math.round(top) + "px";
+      tip.style.visibility = "visible";
     }
 
     function mapLayout() {
@@ -2465,11 +2483,8 @@
           vctx.font = "10px 'Press Start 2P', monospace";
           vctx.fillText("B", x + 6, y - 6);
         }
-        if (hover && !hot) {
-          const label = i === G.rival.spot ? s.name + " · BILL" : s.name;
-          drawMapTooltip(vctx, x, y, label, { left: ox, top: oy, right: ox + dw, bottom: oy + dh });
-        }
       });
+      updateMapTooltip({ scale, dw, dh, ox, oy, w: viewCss().w, h: viewCss().h });
       const s = SPOTS[G.spotIndex];
       drawBill(vctx, ox + s.x * scale - 8, oy + s.y * scale - 28, 1.1, "idle");
       vctx.fillStyle = "#0a1020";
@@ -2514,7 +2529,10 @@
     function render() {
       if (G.mode !== "game") return;
       if (G.view === "map") drawMap();
-      else blitSurf();
+      else {
+        hideMapTooltip();
+        blitSurf();
+      }
     }
 
     function loop(ts) {
@@ -2627,24 +2645,25 @@
 
     function canvasPos(ev) {
       const r = view.getBoundingClientRect();
-      return { x: ev.clientX - r.left, y: ev.clientY - r.top };
+      const { w, h } = viewCss();
+      if (r.width <= 0 || r.height <= 0) return { x: 0, y: 0 };
+      return {
+        x: (ev.clientX - r.left) * (w / r.width),
+        y: (ev.clientY - r.top) * (h / r.height)
+      };
     }
     function mapClick(ev) {
       if (G.view !== "map" || G.mode !== "game") return;
-      const { scale, ox, oy } = mapLayout();
+      const layout = mapLayout();
       const p = canvasPos(ev);
-      const mx = (p.x - ox) / scale;
-      const my = (p.y - oy) / scale;
-      const best = mapSpotPick(mx, my, 24);
+      const best = mapSpotPickCanvas(p.x, p.y, 16, layout);
       if (best >= 0) hikeTo(best);
     }
     function mapMove(ev) {
-      if (G.view !== "map") { G.mapHover = -1; return; }
-      const { scale, ox, oy } = mapLayout();
+      if (G.view !== "map") { G.mapHover = -1; hideMapTooltip(); return; }
+      const layout = mapLayout();
       const p = canvasPos(ev);
-      const mx = (p.x - ox) / scale;
-      const my = (p.y - oy) / scale;
-      G.mapHover = mapSpotPick(mx, my, 20);
+      G.mapHover = mapSpotPickCanvas(p.x, p.y, 14, layout);
     }
 
     $("btn-start").onclick = () => { ensureAudio(); openSetup(); };
@@ -2689,6 +2708,7 @@
 
     view.addEventListener("click", mapClick);
     view.addEventListener("mousemove", mapMove);
+    view.addEventListener("mouseleave", () => { G.mapHover = -1; hideMapTooltip(); });
     window.addEventListener("resize", resize);
 
     window.addEventListener("keydown", (e) => {

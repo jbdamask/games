@@ -430,7 +430,7 @@
     <section id="screen-setup" class="screen">
       <div class="setup-card">
         <h2>PLAN THE TRIP</h2>
-        <div class="callsign">BEACH CALLSIGN DRAWN AT LAUNCH — GOOGIN · HERB · DANGLER · SPOTBURN</div>
+        <div class="callsign">A RANDOM BEACH CALLSIGN IS ASSIGNED WHEN YOU LAUNCH — NOT CHOSEN BY YOU</div>
         <div class="field">
           <label>MONTH</label>
           <div class="chip-row" id="month-row"></div>
@@ -528,15 +528,15 @@
   <div class="help" id="help">
     <div class="box">
       <h3>HOW TO FISH MONTAUK</h3>
-      <p>You draw a beach callsign — Googin, Herb, Dangler, or Spotburn. Montauk Bill already knows every hole. Outfish him before the trip clock dies.</p>
+      <p>You're assigned a random beach callsign when the trip launches — Googin, Herb, Dangler, or Spotburn. Montauk Bill already knows every hole. Outfish him before the trip clock dies.</p>
       <p>Storms roll in sometimes. Light rain can wake the bass up. A downpour can be hot — but lightning follows. Distant strikes flash the screen; the closer the storm, the faster the flashes and the higher the chance you get hit on the rocks. Fish or flee.</p>
       <p>Walk the shore map and pick a spot, then hit FISH HERE. Gold B on the map is Montauk Bill. You cannot fish his hole. Talk to him — he may give you a tip — then he leaves.</p>
       <p>ARROWS / WASD move. UP wades out. DOWN comes in. SPACE casts, works the lure, climbs a boulder, or pumps a fish.</p>
       <p>Rocky spots have boulders. Wade out and climb. Waves shove you back. Stand too far back on the rock or too far out on a pointy peak and a big one can wash you off — lose the fish if you're still hooked up.</p>
-      <p>You carry a small box. Montauk eats plugs. Fish the rocks careless and you leave hardware in them. Leave a lure out without reeling and it will hang up.</p>
+      <p>You carry a small box. Montauk eats plugs. Fish the rocks careless and you can lose hardware — but a snag usually gives you time to pop it free with UP.</p>
       <p>Each lure casts a different distance: BUCKTAIL shortest, DARTER a bit farther, MINNOW farther, POPPER farthest. POPPER: shake it on top (tap SPACE). DARTER: reel, and tap UP every other turn. MINNOW: slow and steady (hold SPACE). BUCKTAIL: low and slow, lift the rod now and then so it does not hang in the boulders.</p>
       <p>Wind piles seaweed onto the onshore side. A fouled lure catches nothing. Change type (1–4) and color ([ ]) until something eats.</p>
-      <p>When you hook up, pump the rod with SPACE. Too much heat snaps the line. Too little and a shark or seal may steal the bass. Points count only when you LAND the fish. Then you let it go.</p>
+      <p>When you hook up, pump SPACE in short bursts — let tension drop between pumps. Too much heat snaps the line. Too little and a shark or seal may steal the bass. Points count only when you LAND the fish. Then you let it go.</p>
       <p>A trip is 6 hours. Two real minutes is one game hour. Click a map marker to hike the coast (hiking costs time).</p>
       <p>Montauk Bill's favorite charity is <a class="charity-link" href="https://kidsneedmore.org/" target="_blank" rel="noopener noreferrer">Kids Need More</a> — kidsneedmore.org</p>
       <p style="margin-top:12px"><button class="pixel-btn" id="btn-help-close">GOT IT</button></p>
@@ -1231,6 +1231,7 @@
       rebuildPicky();
       resetBill();
       G.rival.spot = pickBillSpot(-1);
+      log("callsign assigned: " + playerName(), "good");
       log(playerName() + " hits the rocks. Wind " + G.windDir + " " + G.windKts + ".");
       if (G.storm.active) {
         if (G.storm.rain === 2) log("storm already hammering — bass should eat", "good");
@@ -1238,7 +1239,7 @@
         else log("thunder in the distance — storm building", "warn");
       }
       log("Montauk Bill is already on " + SPOTS[G.rival.spot].name + ". Outfish him.", "warn");
-      toast("OUTFISH MONTAUK BILL");
+      toast("YOU ARE " + playerName());
       showScreen("screen-game");
       G.mode = "game";
       G.lastTs = performance.now();
@@ -1294,13 +1295,14 @@
       if (pref && pref.picky) {
         if (G.lure === pref.lure) lureMul *= 1 + pref.strength * 0.55;
         if (G.color === pref.color) lureMul *= 1 + pref.strength * 0.35;
-        if (G.lure !== pref.lure && G.color !== pref.color) lureMul *= 0.55 + G.rng() * 0.5;
+        if (G.lure !== pref.lure && G.color !== pref.color) lureMul *= 0.72 + G.rng() * 0.38;
       }
       const sea = seas(spot);
       const seaMul = sea > 3.4 ? 0.7 : sea > 1.2 ? 1.1 : 0.9;
       const rainMul = rainFishMul();
-      const perSec = 0.055 * monthBase * timeMul * rockMul * lureMul * spot.q * seaMul * rainMul * G.techMul;
-      return 1 - Math.pow(1 - clamp(perSec, 0.008, 0.32), dt);
+      const tech = Math.max(G.techMul, G.lureWeed ? 0.12 : 0.42);
+      const perSec = 0.058 * monthBase * timeMul * rockMul * lureMul * spot.q * seaMul * rainMul * tech;
+      return 1 - Math.pow(1 - clamp(perSec, 0.014, 0.32), dt);
     }
 
     function fishSize() {
@@ -1370,11 +1372,11 @@
       };
       G.threat = null;
       const deep = currentSpot().q > 1.15 || G.bill.onRock >= 1;
-      const stealChance = (inch >= 28 ? 0.18 : 0.07) + (deep ? 0.08 : 0);
+      const stealChance = (inch >= 28 ? 0.11 : 0.04) + (deep ? 0.05 : 0);
       if (G.rng() < stealChance) {
         G.threat = {
           kind: currentSpot().side === "north" && G.rng() < 0.6 ? "seal" : "shark",
-          x: 310,
+          x: 330,
           t: 0
         };
         log(G.threat.kind.toUpperCase() + " in the wash", "warn");
@@ -1518,7 +1520,7 @@
         G.techMul = 0.05;
         G.techHint = "SNAGGED — TAP UP TO POP FREE";
         if (rodTap()) {
-          if (G.rng() < 0.55) {
+          if (G.rng() < 0.72) {
             G.snagged = false;
             G.lastLift = 0;
             G.lureY -= 10;
@@ -1529,7 +1531,7 @@
             loseLure("hung in the boulders");
             return;
           }
-        } else if (G.snagT > 3.8) {
+        } else if (G.snagT > 6.5) {
           loseLure("hung in the boulders");
         }
         return;
@@ -1554,7 +1556,7 @@
           beep(520, 0.03, "square", 0.03);
         }
         if (keys.space && G.lureHold > 0.12) speed = 14;
-        tech = G.lureShake > 0.28 ? 1.55 : 0.32;
+        tech = G.lureShake > 0.28 ? 1.55 : 0.48;
         hint = G.lureShake > 0.28 ? "WALKING THE DOG" : "SHAKE IT (SPACE) OR ROD SNAP (UP)";
       } else if (G.lure === "DARTER") {
         G.lureY = lerp(G.lureY, 130, dt * 2);
@@ -1581,8 +1583,8 @@
           }
         }
         const trials = G.darterGood + G.darterBad;
-        const ratio = trials < 1 ? 0.45 : G.darterGood / trials;
-        tech = 0.35 + ratio * 1.2;
+        const ratio = trials < 1 ? 0.55 : G.darterGood / trials;
+        tech = 0.48 + ratio * 1.05;
         hint = G.needTap ? "TAP THE ROD (UP)" : "REEL — TAP EVERY OTHER TURN";
       } else if (G.lure === "MINNOW") {
         G.lureY = lerp(G.lureY, 128, dt * 2);
@@ -1625,7 +1627,7 @@
           hint = "CRANK LOW — LIFT NOW AND THEN";
         }
         if (rocky && G.lureY > 132 && G.lastLift > 2.6 && keys.space) {
-          if (G.rng() < dt * 0.55) {
+          if (G.rng() < dt * 0.16) {
             G.snagged = true;
             G.snagT = 0;
             toast("SNAGGED");
@@ -1642,8 +1644,8 @@
         G.lureY = 114 + Math.sin(G.wait * 18) * 3 * G.lureShake;
       }
 
-      if (rocky && G.lure !== "PENCIL POPPER" && G.lureY > 133 && speed > 36) {
-        if (G.rng() < dt * 0.35) {
+      if (rocky && G.lure !== "PENCIL POPPER" && G.lureY > 133 && speed > 48) {
+        if (G.rng() < dt * 0.1) {
           G.snagged = true;
           G.snagT = 0;
           toast("SNAGGED");
@@ -1651,13 +1653,13 @@
         }
       }
 
-      if (rocky && !G.snagged && speed < 8 && G.wait > 1.2) {
-        const settle = G.wait - 1.2;
-        let risk = dt * (0.05 + settle * 0.06);
-        if (G.lureY > 131) risk *= 1.55;
-        if (G.lure === "BUCKTAIL") risk *= 1.5;
-        else if (G.lure === "MINNOW") risk *= 1.1;
-        else if (G.lure === "PENCIL POPPER") risk *= 0.25;
+      if (rocky && !G.snagged && speed < 4 && G.wait > 3.5) {
+        const settle = G.wait - 3.5;
+        let risk = dt * (0.012 + settle * 0.014);
+        if (G.lureY > 131) risk *= 1.25;
+        if (G.lure === "BUCKTAIL") risk *= 1.2;
+        else if (G.lure === "MINNOW") risk *= 1.05;
+        else if (G.lure === "PENCIL POPPER") risk *= 0.2;
         if (G.rng() < risk) {
           G.snagged = true;
           G.snagT = 0;
@@ -1753,7 +1755,7 @@
           if (G.wait > 1.4) retrieve(false);
         } else if (!G.snagged && G.rng() < biteChance(dt)) {
           hookUp();
-        } else if (G.wait > 22) {
+        } else if (G.wait > 30) {
           toast("NOTHING");
           retrieve(false);
         }
@@ -1763,14 +1765,15 @@
         const f = G.fish;
         f.fight += dt;
         const pumping = keys.space;
+        const inch = f.inch;
         if (pumping) {
-          f.land += dt * (28 / (f.inch * 0.12));
-          f.tension += dt * (22 + f.inch * 0.35);
+          f.land += dt * (50 / (inch * 0.11 + 5.5));
+          f.tension += dt * (7 + inch * 0.19);
         } else {
-          f.tension -= dt * 18;
-          f.land -= dt * 3;
+          f.tension -= dt * 36;
+          f.land -= dt * 1.1;
         }
-        f.tension += Math.sin(f.fight * 3.2) * 8 * dt * f.inch * 0.04;
+        f.tension += Math.sin(f.fight * 3.2) * 5 * dt * inch * 0.035;
         f.tension = clamp(f.tension, 0, 110);
         f.land = clamp(f.land, 0, 100);
         f.x = lerp(f.x, bill.x + 40 + (100 - f.land), dt * 1.5);
@@ -1778,14 +1781,14 @@
         else if (f.land >= 100) landFish();
         if (G.threat && G.fish) {
           G.threat.t += dt;
-          G.threat.x -= (18 + (G.threat.kind === "shark" ? 14 : 8)) * dt;
-          if (G.threat.x <= G.fish.x + 8) loseFish(G.threat.kind);
+          G.threat.x -= (12 + (G.threat.kind === "shark" ? 9 : 5)) * dt;
+          if (G.threat.t > 1.8 && G.threat.x <= G.fish.x + 8) loseFish(G.threat.kind);
         }
       }
 
       $("land-bar").style.width = (G.fish ? G.fish.land : 0) + "%";
       $("ten-bar").style.width = (G.fish ? G.fish.tension : 0) + "%";
-      if ($("tech-line")) $("tech-line").textContent = G.lureIn && !G.fish ? G.techHint : (G.fish ? "PUMP SPACE — DON'T HORSE IT" : "");
+      if ($("tech-line")) $("tech-line").textContent = G.lureIn && !G.fish ? G.techHint : (G.fish ? "PUMP SPACE IN BURSTS — LET TENSION DROP" : "");
 
       G.particles.forEach((p) => {
         p.life -= dt;

@@ -762,6 +762,7 @@
       shake: 0,
       log: [],
       picky: {},
+      school: null,
       mapHover: -1,
       weatherSlot: 0,
       storm: { active: false, rain: 0, proximity: 0, flash: 0, flashCd: 10, warned: false },
@@ -1086,6 +1087,69 @@
       $("btn-fish").style.opacity = here ? "0.38" : "1";
     }
 
+    function rollSpotFish() {
+      const tb = timeBucket(G.hour);
+      const pref = G.picky[G.spotIndex + ":" + tb];
+      const spot = currentSpot();
+      const r = mulberry(hash(G.seed + ":fish:" + G.spotIndex + ":" + tb));
+      G.school = {
+        active: false,
+        heat: 0,
+        castsLeft: 0,
+        probe: 0,
+        activity: 0.1 + r() * 0.28 + spot.q * 0.1 + (pref && pref.picky ? pref.strength * 0.06 : 0.04)
+      };
+    }
+
+    function markSchool(why) {
+      if (!G.school || G.school.active) return;
+      G.school.active = true;
+      G.school.heat = 0.45 + G.rng() * 0.55;
+      G.school.castsLeft = 2 + Math.floor(G.rng() * 3);
+      const msg = why === "luck" ? "BASS ROLLED IN CLOSE" : "MARKED FISH — STAY ON IT";
+      log(msg, "good");
+      toast(msg, 2.2);
+    }
+
+    function schoolFade(msg) {
+      if (!G.school || !G.school.active) return;
+      G.school.active = false;
+      G.school.heat *= 0.45;
+      G.school.probe = 0.12;
+      if (msg) log(msg);
+    }
+
+    function updateFishProbe(dt) {
+      if (G.fish || G.lureWeed || G.snagged || !G.lureIn) return;
+      if (!G.school) rollSpotFish();
+      if (G.school.active) return;
+      const tb = timeBucket(G.hour);
+      const pref = G.picky[G.spotIndex + ":" + tb];
+      let findRate = 0.022 * Math.max(G.techMul, 0.12);
+      if (pref && pref.picky) {
+        if (G.lure === pref.lure) findRate *= 1.5;
+        if (G.color === pref.color) findRate *= 1.3;
+        if (G.lure !== pref.lure && G.color !== pref.color) findRate *= 0.5;
+      }
+      findRate *= 0.75 + G.school.activity;
+      G.school.probe = clamp(G.school.probe + findRate * dt, 0, 1.2);
+      if (G.school.probe >= 1) markSchool("probe");
+      else if (G.rng() < dt * G.school.activity * 0.014) markSchool("luck");
+    }
+
+    function schoolBiteMul() {
+      if (!G.school) return 0.05;
+      if (G.school.active) return 1.15 + G.school.heat * 1.65;
+      if (G.school.probe > 0.3) return 0.07 + G.school.probe * 0.14;
+      return 0.045;
+    }
+
+    function onRetrieveNoBite() {
+      if (!G.school || !G.school.active) return;
+      G.school.castsLeft -= 1;
+      if (G.school.castsLeft <= 0) schoolFade("school moved on");
+    }
+
     function rebuildPicky() {
       G.picky = {};
       SPOTS.forEach((s, i) => {
@@ -1234,6 +1298,7 @@
       G.weed = [];
       G.particles = [];
       resetLureWork();
+      rollSpotFish();
       const spot = currentSpot();
       const n = spot.rocky ? 3 : 0;
       G.boulders = [];
@@ -1352,14 +1417,16 @@
       if (pref && pref.picky) {
         if (G.lure === pref.lure) lureMul *= 1 + pref.strength * 0.55;
         if (G.color === pref.color) lureMul *= 1 + pref.strength * 0.35;
-        if (G.lure !== pref.lure && G.color !== pref.color) lureMul *= 0.72 + G.rng() * 0.38;
+        if (G.lure !== pref.lure && G.color !== pref.color) lureMul *= 0.55 + G.rng() * 0.25;
       }
       const sea = seas(spot);
       const seaMul = sea > 3.4 ? 0.7 : sea > 1.2 ? 1.1 : 0.9;
       const rainMul = rainFishMul();
-      const tech = Math.max(G.techMul, G.lureWeed ? 0.12 : 0.42);
-      const perSec = 0.058 * monthBase * timeMul * rockMul * lureMul * spot.q * seaMul * rainMul * tech;
-      return 1 - Math.pow(1 - clamp(perSec, 0.014, 0.32), dt);
+      const tech = G.lureWeed ? 0.05 : clamp(G.techMul, 0.1, 1.55);
+      const schoolMul = schoolBiteMul();
+      const perSec = 0.012 * monthBase * timeMul * rockMul * lureMul * spot.q * seaMul * rainMul * tech * schoolMul;
+      const cap = G.school && G.school.active ? 0.16 : 0.028;
+      return 1 - Math.pow(1 - clamp(perSec, 0.0015, cap), dt);
     }
 
     function fishSizeLabel(inch) {
@@ -1468,6 +1535,7 @@
 
     function retrieve(bitten) {
       if (!G.lureIn) return;
+      if (!bitten) onRetrieveNoBite();
       if (G.lureWeed && !bitten) {
         toast("WEEDED");
         log("fouled in cabbage", "warn");
@@ -1506,6 +1574,11 @@
       const est = "~" + inch + '" ' + label + " STRIPER";
       toast(">>> FISH ON! <<<\nEST. " + est, 3.8);
       log(">>> FISH ON! <<<  EST. " + est, "fish-on");
+      if (G.school) {
+        G.school.castsLeft = Math.max(G.school.castsLeft, 2 + Math.floor(G.rng() * 4));
+        G.school.heat = Math.min(1, G.school.heat + 0.22);
+        if (!G.school.active) markSchool("luck");
+      }
       beep(880, 0.07); beep(660, 0.1); setTimeout(() => beep(990, 0.12), 120);
     }
 
@@ -1793,6 +1866,9 @@
       }
 
       G.techMul = G.lureWeed ? 0.05 : tech;
+      if (!G.fish && G.school && !G.school.active && G.school.probe > 0.28) {
+        hint = "WORK THE WATER — MARKING FISH";
+      }
       G.techHint = G.lureWeed ? "FOULED IN WEED" : hint;
 
       if (G.lureX <= bill.x + 22) retrieve(false);
@@ -1882,13 +1958,14 @@
       if (G.lureIn && !G.fish) {
         G.wait += dt;
         updateLureWork(dt, bill, spot);
+        updateFishProbe(dt);
         if (!G.lureIn) {
           /* reeled in or lost */
         } else if (G.lureWeed) {
           if (G.wait > 1.4) retrieve(false);
         } else if (!G.snagged && G.rng() < biteChance(dt)) {
           hookUp();
-        } else if (G.wait > 30) {
+        } else if (G.wait > (G.school && G.school.active ? 28 : 48)) {
           toast("NOTHING");
           retrieve(false);
         }
@@ -1939,7 +2016,17 @@
       } else {
         if (castMeter) castMeter.classList.remove("on");
         if (castBar) castBar.style.height = "0%";
-        if ($("tech-line")) $("tech-line").textContent = G.lureIn && !G.fish ? G.techHint : (G.fish ? "FISH ON — ~" + G.fish.inch + '" ' + fishSizeLabel(G.fish.inch) + " · PUMP SPACE IN BURSTS" : "");
+        if ($("tech-line")) {
+          if (G.fish) {
+            $("tech-line").textContent = "FISH ON — ~" + G.fish.inch + '" ' + fishSizeLabel(G.fish.inch) + " · PUMP SPACE IN BURSTS";
+          } else if (G.lureIn && G.school && G.school.active) {
+            $("tech-line").textContent = "SCHOOL ON — KEEP CASTING";
+          } else if (G.lureIn) {
+            $("tech-line").textContent = G.techHint;
+          } else {
+            $("tech-line").textContent = "";
+          }
+        }
       }
 
       G.particles.forEach((p) => {

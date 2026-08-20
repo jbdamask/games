@@ -2365,6 +2365,56 @@
       if (G.storm.flash > 0) drawLightningFlash(bctx, SURF_W, SURF_H, G.storm.flash * 2.8);
     }
 
+    function mapSpotPick(mx, my, maxDist) {
+      let best = -1;
+      let bestD = maxDist;
+      SPOTS.forEach((s, i) => {
+        const d = dist(s.x, s.y, mx, my);
+        if (d < bestD) {
+          bestD = d;
+          best = i;
+        }
+      });
+      return best;
+    }
+
+    function drawMapTooltip(vctx, x, y, label, bounds) {
+      vctx.font = "8px 'Press Start 2P', monospace";
+      const pad = 4;
+      const tw = vctx.measureText(label).width;
+      const boxW = Math.ceil(tw + pad * 2);
+      const boxH = 14;
+      const candidates = [
+        { tx: x + 10, ty: y - boxH - 6 },
+        { tx: x - boxW - 10, ty: y - boxH - 6 },
+        { tx: x + 10, ty: y + 10 },
+        { tx: x - boxW - 10, ty: y + 10 },
+        { tx: x - boxW / 2, ty: y - boxH - 12 }
+      ];
+      let tx = candidates[0].tx;
+      let ty = candidates[0].ty;
+      for (const c of candidates) {
+        if (c.tx >= bounds.left + 4 && c.ty >= bounds.top + 4 &&
+            c.tx + boxW <= bounds.right - 4 && c.ty + boxH <= bounds.bottom - 4) {
+          tx = c.tx;
+          ty = c.ty;
+          break;
+        }
+      }
+      vctx.strokeStyle = "#000";
+      vctx.lineWidth = 1;
+      vctx.beginPath();
+      vctx.moveTo(x, y);
+      vctx.lineTo(clamp(tx + boxW * 0.25, x - 12, x + 12), ty + boxH);
+      vctx.stroke();
+      vctx.fillStyle = "#0a1020";
+      vctx.fillRect(tx, ty, boxW, boxH);
+      vctx.strokeStyle = "#efe6d0";
+      vctx.strokeRect(tx, ty, boxW, boxH);
+      vctx.fillStyle = "#efe6d0";
+      vctx.fillText(label, tx + pad, ty + boxH - 4);
+    }
+
     function mapLayout() {
       const { w, h } = viewCss();
       const scale = Math.min(w / MAP_W, h / MAP_H);
@@ -2413,12 +2463,8 @@
           vctx.fillText("B", x + 6, y - 6);
         }
         if (hover && !hot) {
-          vctx.fillStyle = "#0a1020";
           const label = i === G.rival.spot ? s.name + " · BILL" : s.name;
-          vctx.fillRect(x + 8, y - 16, label.length * 8 + 8, 14);
-          vctx.fillStyle = "#efe6d0";
-          vctx.font = "8px 'Press Start 2P', monospace";
-          vctx.fillText(label, x + 12, y - 5);
+          drawMapTooltip(vctx, x, y, label, { left: ox, top: oy, right: ox + dw, bottom: oy + dh });
         }
       });
       const s = SPOTS[G.spotIndex];
@@ -2586,11 +2632,7 @@
       const p = canvasPos(ev);
       const mx = (p.x - ox) / scale;
       const my = (p.y - oy) / scale;
-      let best = -1, bestD = 22;
-      SPOTS.forEach((s, i) => {
-        const d = dist(s.x, s.y, mx, my);
-        if (d < bestD) { bestD = d; best = i; }
-      });
+      const best = mapSpotPick(mx, my, 24);
       if (best >= 0) hikeTo(best);
     }
     function mapMove(ev) {
@@ -2599,10 +2641,7 @@
       const p = canvasPos(ev);
       const mx = (p.x - ox) / scale;
       const my = (p.y - oy) / scale;
-      G.mapHover = -1;
-      SPOTS.forEach((s, i) => {
-        if (dist(s.x, s.y, mx, my) < 16) G.mapHover = i;
-      });
+      G.mapHover = mapSpotPick(mx, my, 20);
     }
 
     $("btn-start").onclick = () => { ensureAudio(); openSetup(); };

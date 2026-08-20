@@ -585,8 +585,9 @@
       <p>ARROWS / WASD move. UP wades out. DOWN comes in. Hold SPACE to aim and build cast power — release to throw. While aiming, ◀▶ aim along the surf and ▲▼ pick depth. The power meter fills like Wii golf; hit the green sweet spot at the top for max distance. SPACE also works the lure, climbs a boulder, or pumps a fish.</p>
       <p>Rocky spots have boulders. Wade out and climb. Waves shove you back. Stand too far back on the rock or too far out on a pointy peak and a big one can wash you off — lose the fish if you're still hooked up.</p>
       <p>You carry a small box. Montauk eats plugs. Fish the rocks careless and you can lose hardware — but a snag usually gives you time to pop it free with UP.</p>
-      <p>Each lure has a different max cast: BUCKTAIL shortest, DARTER a bit farther, MINNOW farther, POPPER farthest — your timing and aim set how far you actually throw. POPPER: shake it on top (tap SPACE). DARTER: reel, and tap UP every other turn. MINNOW: slow and steady (hold SPACE). BUCKTAIL: low and slow, lift the rod now and then so it does not hang in the boulders.</p>
-      <p>Wind piles seaweed onto the onshore side. A fouled lure catches nothing. Change type (1–4) and color ([ ]) until something eats.</p>
+      <p>Four plugs in the box — bucktail, popper, darter, minnow. Each throws a different distance. After you cast, work the lure with SPACE and the rod (UP).</p>
+      <p>Montauk Bill knows how each plug wants to be fished — and what's biting where. Talk to him (T at his hole). The better you work a lure, the more fish you'll find and hook.</p>
+      <p>Wind piles seaweed onto the onshore side. A fouled lure catches nothing. Switch type (1–4) or color ([ ]) if the bite dies.</p>
       <p>When you hook up, pump SPACE in short bursts — let tension drop between pumps. Too much heat snaps the line. Too little and a shark or seal may steal the bass. Points count only when you LAND the fish. Then you let it go.</p>
       <p>A trip is 6 hours. Two real minutes is one game hour. Click a map marker to hike the coast (hiking costs time).</p>
       <p>Montauk Bill's favorite charity is <a class="charity-link" href="https://kidsneedmore.org/" target="_blank" rel="noopener noreferrer">Kids Need More</a> — kidsneedmore.org</p>
@@ -1125,7 +1126,7 @@
       if (G.school.active) return;
       const tb = timeBucket(G.hour);
       const pref = G.picky[G.spotIndex + ":" + tb];
-      let findRate = 0.022 * Math.max(G.techMul, 0.12);
+      let findRate = 0.034 * G.techMul;
       if (pref && pref.picky) {
         if (G.lure === pref.lure) findRate *= 1.5;
         if (G.color === pref.color) findRate *= 1.3;
@@ -1134,7 +1135,7 @@
       findRate *= 0.75 + G.school.activity;
       G.school.probe = clamp(G.school.probe + findRate * dt, 0, 1.2);
       if (G.school.probe >= 1) markSchool("probe");
-      else if (G.rng() < dt * G.school.activity * 0.014) markSchool("luck");
+      else if (G.rng() < dt * G.school.activity * G.techMul * 0.011) markSchool("luck");
     }
 
     function schoolBiteMul() {
@@ -1422,9 +1423,9 @@
       const sea = seas(spot);
       const seaMul = sea > 3.4 ? 0.7 : sea > 1.2 ? 1.1 : 0.9;
       const rainMul = rainFishMul();
-      const tech = G.lureWeed ? 0.05 : clamp(G.techMul, 0.1, 1.55);
+      const tech = G.lureWeed ? 0.05 : clamp(G.techMul, 0.08, 1.55);
       const schoolMul = schoolBiteMul();
-      const perSec = 0.012 * monthBase * timeMul * rockMul * lureMul * spot.q * seaMul * rainMul * tech * schoolMul;
+      const perSec = 0.012 * monthBase * timeMul * rockMul * lureMul * spot.q * seaMul * rainMul * tech * tech * schoolMul;
       const cap = G.school && G.school.active ? 0.16 : 0.028;
       return 1 - Math.pow(1 - clamp(perSec, 0.0015, cap), dt);
     }

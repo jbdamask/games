@@ -55,13 +55,14 @@
       position: relative;
     }
     #title-logo {
-      width: min(88vw, 380px);
-      max-height: min(62vh, 520px);
+      width: min(88vw, 340px);
+      max-height: min(52vh, 460px);
       height: auto;
       object-fit: contain;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
       display: block;
+      margin: 8px 0 4px;
     }
     .title-tagline {
       color: var(--foam);
@@ -82,6 +83,13 @@
       font-size: clamp(18px, 4vw, 36px);
       letter-spacing: 4px;
       text-shadow: 4px 4px 0 #000;
+      margin-bottom: 8px;
+    }
+    .title-sub {
+      color: var(--dim);
+      font-size: 8px;
+      margin: 0 0 6px;
+      letter-spacing: 1px;
     }
     .title-copy p {
       color: var(--foam);
@@ -330,6 +338,10 @@
 <body>
   <div id="app">
     <section id="screen-title" class="screen active">
+      <div class="title-copy title-head">
+        <h1>SURF RATS</h1>
+        <p class="title-sub">MONTAUK POINT · CATCH &amp; RELEASE</p>
+      </div>
       <img id="title-logo" src="surf-rats-game-logo.png" alt="Surf Rats — Montauk surf fishing" width="1086" height="1448" />
       <div class="title-copy">
         <p class="title-tagline">Are you tough enough to fish Montauk?</p>

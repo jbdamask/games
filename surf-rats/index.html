@@ -1227,8 +1227,12 @@
           : "Ebb's pulling — " + spotName + ", " + colName + " " + lure + "."
       ];
       let message = openers[Math.floor(G.rng() * openers.length)] + " " + bodies[Math.floor(G.rng() * bodies.length)]();
-      if (G.rng() < 0.20) {
-        message += " Got a couple of extra bucks? Donate to Kids Need More and help out a kid.";
+      const appendTips = [
+        " Got a couple of extra bucks? Donate to Kids Need More and help out a kid.",
+        " Catch and fast release is where it's at. Nobody cares about your social media pic!"
+      ];
+      for (const tip of appendTips) {
+        if (G.rng() < 0.20) message += tip;
       }
       return { spot: hole.i, lure, color, message };
     }

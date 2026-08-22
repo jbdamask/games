@@ -421,11 +421,15 @@
       color: var(--ink);
     }
     .mount b { color: var(--gold); display: block; margin-bottom: 4px; }
-    .mount .sil {
-      height: 18px;
-      background: #6a8a5a;
-      margin: 6px 0;
-      box-shadow: 2px 2px 0 #000;
+    .mount .trophy-fish {
+      display: block;
+      width: 100%;
+      max-width: 124px;
+      height: auto;
+      margin: 6px 0 2px;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      filter: drop-shadow(2px 2px 0 #000);
     }
 
     .help {
@@ -2971,8 +2975,8 @@
       }
       const wall = t.wall.slice(0, 12);
       $("trophy-wall").innerHTML = wall.length ? wall.map((f) => {
-        const w = Math.max(18, Math.min(110, f.inch * 2.2));
-        return `<div class="mount"><b>${f.inch}" BASS</b>${f.spot}<br>${f.month} · ${LURE_SHORT[f.lure] || f.lure}<div class="sil" style="width:${w}px"></div></div>`;
+        const w = Math.max(52, Math.min(124, f.inch * 2.4));
+        return `<div class="mount"><b>${f.inch}" BASS</b>${f.spot}<br>${f.month} · ${LURE_SHORT[f.lure] || f.lure}<img class="trophy-fish" src="striped-bass.png" alt="" style="width:${w}px" /></div>`;
       }).join("") : `<div class="trophy-stats">THE WALL IS EMPTY. GO CATCH SOMETHING.</div>`;
     }
     function openTrophy(from) {

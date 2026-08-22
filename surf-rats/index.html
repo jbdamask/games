@@ -732,7 +732,7 @@
     const BILL_TIP_BITE_CHANCE = 0.60;
     const BILL_TIP_DURATION = 60;
     const FISH_IDLE_GRACE = 3;
-    const FISH_IDLE_JUMP_CHANCE = 0.06;
+    const FISH_IDLE_JUMP_CHANCE = 0.12;
     const FISH_IDLE_EAT_SEC = 20;
     const CURSE_DURATION = 3;
     const CURSE_TEXT = "$#&@!!!";
@@ -861,6 +861,7 @@
       box: { BUCKTAIL: 3, "PENCIL POPPER": 2, DARTER: 2, MINNOW: 2 },
       lostLures: 0,
       catches: [],
+      fishLosses: [],
       spotIndex: 18,
       travel: null,
       player: { x: 70, vx: 0, onRock: -1, splash: 0, frame: 0 },
@@ -1561,6 +1562,7 @@
       G.biggest = 0;
       G.lostLures = 0;
       G.catches = [];
+      G.fishLosses = [];
       G.box = Object.assign({}, STARTER_BOX);
       G.lure = setup.lure;
       G.color = setup.color;
@@ -1622,6 +1624,9 @@
         `MONTAUK BILL  LANDED ${G.rival.landed}  ·  ${G.rival.score} PTS<br>` +
         `YOUR BIGGEST  ${G.biggest ? G.biggest + '"' : "—"}   HIS  ${G.rival.biggest ? G.rival.biggest + '"' : "—"}<br>` +
         `STOLEN  ${G.stolen}   SNAPPED  ${G.snapped}<br>` +
+        (G.fishLosses.length
+          ? `LOSSES<br>${G.fishLosses.map((l) => `${l.inch ? l.inch + '" ' : ""}${l.reason}`).join("<br>")}<br>`
+          : "") +
         `LURES LOST  ${G.lostLures}   LEFT IN BOX  ${boxLeft()}<br>` +
         `<span style="color:${beat ? "#6fbf73" : (tie ? "#e8c547" : "#e25b4a")}">${verdict}</span><br>` +
         `BEST  ${best}`;
@@ -1791,7 +1796,8 @@
         fight: 0.7 + inch / 80,
         runPhase: G.rng() * Math.PI * 2,
         hookY: G.lureY,
-        idleReelT: 0
+        idleReelT: 0,
+        spaceHeld: false
       };
       G.threat = null;
       const deep = currentSpot().q > 1.15 || G.player.onRock >= 1;
@@ -1946,22 +1952,24 @@
       }
     }
 
+    function fishLossCopy(why, inch) {
+      const label = inch ? inch + '" bass' : "bass";
+      if (why === "seal") return { toast: "LOST — SEAL TOOK IT", log: label + " lost — SEAL STOLE IT" };
+      if (why === "shark") return { toast: "LOST — SHARK TOOK IT", log: label + " lost — SHARK STOLE IT" };
+      if (why === "snap") return { toast: "LOST — LINE SNAPPED", log: label + " lost — LINE SNAPPED" };
+      if (why === "wave") return { toast: "LOST — WAVE KNOCKED YOU OFF", log: label + " lost — KNOCKED OFF BY WAVE" };
+      if (why === "jump") return { toast: "LOST — FISH SHOOK THE HOOK", log: label + " lost — SHOOK THE HOOK" };
+      return { toast: "LOST THE FISH", log: label + " lost" };
+    }
+
     function loseFish(why) {
-      if (why === "seal" || why === "shark") {
-        G.stolen += 1;
-        toast(why === "seal" ? "SEAL TOOK IT" : "SHARK TOOK IT");
-        log(why.toUpperCase() + " stole the bass", "bad");
-      } else if (why === "snap") {
-        G.snapped += 1;
-        toast("LINE SNAPPED");
-        log("popped the leader", "bad");
-      } else if (why === "wave") {
-        toast("KNOCKED OFF — FISH GONE");
-        log("wave dumped " + playerName() + " — lost the fish", "bad");
-      } else if (why === "jump") {
-        toast("FISH SPIT THE HOOK");
-        log("bass shook the hook — keep pumping", "bad");
-      }
+      const inch = G.fish ? G.fish.inch : 0;
+      const copy = fishLossCopy(why, inch);
+      if (why === "seal" || why === "shark") G.stolen += 1;
+      else if (why === "snap") G.snapped += 1;
+      G.fishLosses.push({ inch, why, spot: currentSpot().name, reason: copy.log });
+      toast(copy.toast, 3);
+      log("LOST: " + copy.log, "bad");
       G.fish = null;
       G.threat = null;
       G.lureIn = false;
@@ -2006,12 +2014,12 @@
         player.x = Math.max(90, player.x - 36);
         G.shake = 0.45;
         beep(90, 0.2, "sawtooth", 0.06);
-        toast("KNOCKED OFF");
+        if (!G.fish) toast("KNOCKED OFF");
       } else {
         player.splash = 0.9;
         player.x = Math.max(86, player.x - 14);
         G.shake = 0.28;
-        toast("WASHED OFF");
+        if (!G.fish) toast("WASHED OFF");
         beep(90, 0.16, "sawtooth", 0.05);
       }
       if (G.fish) loseFish("wave");
@@ -2259,7 +2267,7 @@
       if (keys.spaceTap) {
         const near = boulderAt(player.x);
         if (G.fish) {
-          G.fish.idleReelT = 0;
+          /* reel handled below */
         } else if (G.lureIn) {
           /* retrieve handled in updateLureWork */
         } else if (player.onRock < 0 && near >= 0 && player.x > 150) {
@@ -2324,10 +2332,10 @@
       if (G.fish) {
         const f = G.fish;
         f.fight += dt;
-        const pumping = keys.space || keys.spaceTap;
+        if (f.spaceHeld && !keys.space) f.idleReelT = 0;
+        f.spaceHeld = keys.space;
         const inch = f.inch;
-        if (pumping) {
-          f.idleReelT = 0;
+        if (keys.space) {
           f.land += dt * (50 / (inch * 0.11 + 5.5));
           f.tension += dt * (7 + inch * 0.19);
         } else {
@@ -2347,11 +2355,11 @@
           f.land = clamp(f.land, 0, 100);
           const homeX = player.x + 36 + (100 - f.land) * 0.9;
           const homeY = f.hookY + (100 - f.land) * 0.08;
-          const run = pumping ? 0.35 : 1;
+          const run = keys.space ? 0.35 : 1;
           const pullX = Math.sin(f.fight * 2.6 + f.runPhase) * (10 + inch * 0.18) * run;
           const pullY = Math.cos(f.fight * 3.4 + f.runPhase * 0.7) * (5 + inch * 0.07) * run;
-          G.lureX = lerp(G.lureX, homeX + pullX, dt * (pumping ? 2.4 : 1.15));
-          G.lureY = lerp(G.lureY, homeY + pullY, dt * (pumping ? 2.1 : 1.05));
+          G.lureX = lerp(G.lureX, homeX + pullX, dt * (keys.space ? 2.4 : 1.15));
+          G.lureY = lerp(G.lureY, homeY + pullY, dt * (keys.space ? 2.1 : 1.05));
           G.lureX = clamp(G.lureX, player.x + 28, 392);
           G.lureY = clamp(G.lureY, 108, 148);
           if (f.tension >= 100) loseFish("snap");
@@ -2994,10 +3002,20 @@
         `TRIPS  ${t.trips}<br>` +
         `LANDED  ${t.landed}   BIGGEST  ${t.biggest ? t.biggest + '" @ ' + t.biggestSpot : "—"}<br>` +
         `STOLEN  ${t.stolen}   SNAPPED  ${t.snapped}   LURES LEFT IN ROCKS  ${t.lostLures}`;
+      let tripHtml = "";
       if (G.catches.length) {
-        $("trophy-trip").innerHTML = G.catches.map((c) =>
+        tripHtml += G.catches.map((c) =>
           `${c.inch}"  ${c.spot}  ·  ${LURE_SHORT[c.lure]}`
         ).join("<br>");
+      }
+      if (G.fishLosses.length) {
+        if (tripHtml) tripHtml += "<br>";
+        tripHtml += G.fishLosses.map((l) =>
+          `<span style="color:#e25b4a">LOST: ${l.reason}</span>`
+        ).join("<br>");
+      }
+      if (tripHtml) {
+        $("trophy-trip").innerHTML = tripHtml;
       } else {
         $("trophy-trip").innerHTML = G.mode === "game" || G.mode === "results"
           ? "NO BASS THIS TRIP YET"

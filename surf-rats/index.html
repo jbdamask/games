@@ -731,7 +731,8 @@
     const ALIEN_BASS_CATCH_CHANCE = 0.40;
     const BILL_TIP_BITE_CHANCE = 0.60;
     const BILL_TIP_DURATION = 60;
-    const FISH_IDLE_JUMP_CHANCE = 0.20;
+    const FISH_IDLE_GRACE = 3;
+    const FISH_IDLE_JUMP_CHANCE = 0.06;
     const FISH_IDLE_EAT_SEC = 20;
     const CURSE_DURATION = 3;
     const CURSE_TEXT = "$#&@!!!";
@@ -2323,7 +2324,7 @@
       if (G.fish) {
         const f = G.fish;
         f.fight += dt;
-        const pumping = keys.space;
+        const pumping = keys.space || keys.spaceTap;
         const inch = f.inch;
         if (pumping) {
           f.idleReelT = 0;
@@ -2333,7 +2334,7 @@
           f.idleReelT = (f.idleReelT || 0) + dt;
           if (f.idleReelT >= FISH_IDLE_EAT_SEC) {
             loseFish(G.rng() < 0.5 ? "seal" : "shark");
-          } else if (G.rng() < 1 - Math.pow(1 - FISH_IDLE_JUMP_CHANCE, dt)) {
+          } else if (f.idleReelT >= FISH_IDLE_GRACE && G.rng() < 1 - Math.pow(1 - FISH_IDLE_JUMP_CHANCE, dt)) {
             loseFish("jump");
           } else {
             f.tension -= dt * 36;

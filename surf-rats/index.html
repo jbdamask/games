@@ -731,6 +731,8 @@
     const ALIEN_BASS_CATCH_CHANCE = 0.40;
     const BILL_TIP_BITE_CHANCE = 0.60;
     const BILL_TIP_DURATION = 60;
+    const FISH_IDLE_JUMP_CHANCE = 0.20;
+    const FISH_IDLE_EAT_SEC = 20;
     const ALIEN_MSG =
       "We come in peace. Please don't tell anybody, m'kay? Here are some 50 lb stripers to sweeten the deal.";
     const TRIP_GAME_HOURS = 6;
@@ -1784,7 +1786,8 @@
         dir: 1,
         fight: 0.7 + inch / 80,
         runPhase: G.rng() * Math.PI * 2,
-        hookY: G.lureY
+        hookY: G.lureY,
+        idleReelT: 0
       };
       G.threat = null;
       const deep = currentSpot().q > 1.15 || G.bill.onRock >= 1;
@@ -1951,6 +1954,9 @@
       } else if (why === "wave") {
         toast("KNOCKED OFF — FISH GONE");
         log("wave dumped Bill — lost the fish", "bad");
+      } else if (why === "jump") {
+        toast("FISH SPIT THE HOOK");
+        log("bass shook the hook — keep pumping", "bad");
       }
       G.fish = null;
       G.threat = null;
@@ -2248,7 +2254,7 @@
       if (keys.spaceTap) {
         const near = boulderAt(bill.x);
         if (G.fish) {
-          /* reel handled below */
+          G.fish.idleReelT = 0;
         } else if (G.lureIn) {
           /* retrieve handled in updateLureWork */
         } else if (bill.onRock < 0 && near >= 0 && bill.x > 150) {
@@ -2316,30 +2322,40 @@
         const pumping = keys.space;
         const inch = f.inch;
         if (pumping) {
+          f.idleReelT = 0;
           f.land += dt * (50 / (inch * 0.11 + 5.5));
           f.tension += dt * (7 + inch * 0.19);
         } else {
-          f.tension -= dt * 36;
-          f.land -= dt * 1.1;
+          f.idleReelT = (f.idleReelT || 0) + dt;
+          if (f.idleReelT >= FISH_IDLE_EAT_SEC) {
+            loseFish(G.rng() < 0.5 ? "seal" : "shark");
+          } else if (G.rng() < 1 - Math.pow(1 - FISH_IDLE_JUMP_CHANCE, dt)) {
+            loseFish("jump");
+          } else {
+            f.tension -= dt * 36;
+            f.land -= dt * 1.1;
+          }
         }
-        f.tension += Math.sin(f.fight * 3.2) * 5 * dt * inch * 0.035;
-        f.tension = clamp(f.tension, 0, 110);
-        f.land = clamp(f.land, 0, 100);
-        const homeX = bill.x + 36 + (100 - f.land) * 0.9;
-        const homeY = f.hookY + (100 - f.land) * 0.08;
-        const run = pumping ? 0.35 : 1;
-        const pullX = Math.sin(f.fight * 2.6 + f.runPhase) * (10 + inch * 0.18) * run;
-        const pullY = Math.cos(f.fight * 3.4 + f.runPhase * 0.7) * (5 + inch * 0.07) * run;
-        G.lureX = lerp(G.lureX, homeX + pullX, dt * (pumping ? 2.4 : 1.15));
-        G.lureY = lerp(G.lureY, homeY + pullY, dt * (pumping ? 2.1 : 1.05));
-        G.lureX = clamp(G.lureX, bill.x + 28, 392);
-        G.lureY = clamp(G.lureY, 108, 148);
-        if (f.tension >= 100) loseFish("snap");
-        else if (f.land >= 100) landFish();
-        if (G.threat && G.fish) {
-          G.threat.t += dt;
-          G.threat.x -= (12 + (G.threat.kind === "shark" ? 9 : 5)) * dt;
-          if (G.threat.t > 1.8 && G.threat.x <= G.lureX + 10) loseFish(G.threat.kind);
+        if (G.fish) {
+          f.tension += Math.sin(f.fight * 3.2) * 5 * dt * inch * 0.035;
+          f.tension = clamp(f.tension, 0, 110);
+          f.land = clamp(f.land, 0, 100);
+          const homeX = bill.x + 36 + (100 - f.land) * 0.9;
+          const homeY = f.hookY + (100 - f.land) * 0.08;
+          const run = pumping ? 0.35 : 1;
+          const pullX = Math.sin(f.fight * 2.6 + f.runPhase) * (10 + inch * 0.18) * run;
+          const pullY = Math.cos(f.fight * 3.4 + f.runPhase * 0.7) * (5 + inch * 0.07) * run;
+          G.lureX = lerp(G.lureX, homeX + pullX, dt * (pumping ? 2.4 : 1.15));
+          G.lureY = lerp(G.lureY, homeY + pullY, dt * (pumping ? 2.1 : 1.05));
+          G.lureX = clamp(G.lureX, bill.x + 28, 392);
+          G.lureY = clamp(G.lureY, 108, 148);
+          if (f.tension >= 100) loseFish("snap");
+          else if (f.land >= 100) landFish();
+          if (G.threat && G.fish) {
+            G.threat.t += dt;
+            G.threat.x -= (12 + (G.threat.kind === "shark" ? 9 : 5)) * dt;
+            if (G.threat.t > 1.8 && G.threat.x <= G.lureX + 10) loseFish(G.threat.kind);
+          }
         }
       }
 

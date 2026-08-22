@@ -697,6 +697,8 @@
     const UFO_CHANCE = 0.5;
     const ALIEN_BASS_INCH = 50;
     const ALIEN_BASS_CATCH_CHANCE = 0.40;
+    const BILL_TIP_BITE_CHANCE = 0.60;
+    const BILL_TIP_DURATION = 60;
     const ALIEN_MSG =
       "We come in peace. Please don't tell anybody, m'kay? Here are some 50 lb stripers to sweeten the deal.";
     const TRIP_GAME_HOURS = 6;
@@ -871,7 +873,9 @@
       castAimH: 0,
       castAimV: 0.5,
       ufo: null,
-      alienSpot: -1
+      alienSpot: -1,
+      billAdvice: null,
+      pendingBillAdvice: null
     };
 
     function mulberry(seed) {
@@ -1100,40 +1104,110 @@
       if (G.elapsedMin >= G.rival.nextCatch) billCatch();
       if (G.elapsedMin >= G.rival.nextMove) billMove("roam");
     }
-    function billTip() {
-      const tb = timeBucket(G.hour);
+    function pickBillAdviceSpot(tb) {
       const ranked = SPOTS.map((s, i) => {
         const pref = G.picky[i + ":" + tb];
-        let score = s.q;
-        if (pref && pref.picky) score += pref.strength * 0.2;
-        if (s.side === currentSpot().side) score += 0.08;
+        let score = s.q + G.rng() * 0.42;
+        if (pref && pref.picky) score += pref.strength * 0.28;
+        if (s.side === currentSpot().side) score += 0.06 + G.rng() * 0.12;
+        if (s.rocky && G.rng() > 0.55) score += 0.14;
         if (i === G.spotIndex) score = -99;
         return { i, s, pref, score };
       }).sort((a, b) => b.score - a.score);
-      const hole = ranked[0];
-      const prefHere = G.picky[G.spotIndex + ":" + tb] || hole.pref;
-      const lure = (prefHere && prefHere.lure) || "BUCKTAIL";
-      const col = COLORS.find((c) => c.id === ((prefHere && prefHere.color) || "white"));
-      const techs = {
-        BUCKTAIL: "Bucktail wants low and slow. Lift the rod now and then or you hang it in the boulders.",
-        "PENCIL POPPER": "Walk a popper on top. Tap SPACE or snap the rod UP. Don't just crank it dead.",
-        DARTER: "Darter's a two-count. Reel, then tap UP every other turn.",
-        MINNOW: "Minnow's slow and steady. Hold SPACE. Jerks kill it."
+      const pool = ranked.slice(0, 1 + Math.floor(G.rng() * 5));
+      return pool[Math.floor(G.rng() * pool.length)];
+    }
+    function billAdviceRemaining() {
+      if (!G.billAdvice) return 0;
+      return Math.max(0, G.billAdvice.expires - performance.now() / 1000);
+    }
+    function followingBillAdvice() {
+      const a = G.billAdvice;
+      if (!a || billAdviceRemaining() <= 0) return false;
+      return G.spotIndex === a.spot && G.lure === a.lure && G.color === a.color;
+    }
+    function updateBillAdvice() {
+      if (!G.billAdvice) return;
+      if (billAdviceRemaining() <= 0) {
+        log("Bill's hot tip cooled off", "");
+        G.billAdvice = null;
+      }
+    }
+    function activateBillAdvice(advice) {
+      G.billAdvice = {
+        spot: advice.spot,
+        lure: advice.lure,
+        color: advice.color,
+        expires: performance.now() / 1000 + BILL_TIP_DURATION
       };
-      const n = G.rival.talks % 3;
-      if (n === 0) {
-        return "You're crowding my water, " + playerName() + ". Try " + hole.s.name + " this " + tb + ". That's where the cows slide.";
-      }
-      if (n === 1) {
-        return "If I were you I'd tie a " + (col ? col.name : "WHITE") + " " + lure + ". They're keyed on that combo right now.";
-      }
-      return techs[lure] + " And don't stand too far back on a slab — a wave will dump you and steal the fish.";
+      const col = COLORS.find((c) => c.id === advice.color);
+      log(
+        "Bill's tip: " + SPOTS[advice.spot].name + " · " + (col ? col.name : advice.color.toUpperCase()) + " " + advice.lure +
+        " — 60% hook chance for " + BILL_TIP_DURATION + "s if you match it",
+        "good"
+      );
+    }
+    function rollBillAdvice() {
+      const tb = timeBucket(G.hour);
+      const hole = pickBillAdviceSpot(tb);
+      const pref = hole.pref || G.picky[hole.i + ":" + tb];
+      const lure = (pref && pref.lure) || LURES[Math.floor(G.rng() * LURES.length)];
+      const color = (pref && pref.color) || COLORS[Math.floor(G.rng() * COLORS.length)].id;
+      const col = COLORS.find((c) => c.id === color);
+      const colName = col ? col.name : "WHITE";
+      const spotName = hole.s.name;
+      const timeWord = { dawn: "dawn", day: "midday", dusk: "dusk", night: "after dark" }[tb] || tb;
+      const techs = {
+        BUCKTAIL: "Bucktail wants low and slow — lift now and then or you hang in the boulders.",
+        "PENCIL POPPER": "Walk that popper. Tap SPACE or snap UP. Dead cranking won't draw.",
+        DARTER: "Two-count a darter. Reel, tap UP, reel, tap UP.",
+        MINNOW: "Minnow's slow and steady. Hold SPACE — jerks kill it."
+      };
+      const rockTips = [
+        "Don't stand too far back on a slab — a wave dumps you and steals the fish.",
+        "Wade to the sweet spot on the rock, not the easy spot in the sand.",
+        "Fish the lee side when the swell is up — bass tuck behind the boulders.",
+        "Too far out on a peak and the next wave owns you."
+      ];
+      const windTips = [
+        G.windDir + " wind piles weed onshore — check your plug every cast.",
+        "Wind's " + G.windDir + " " + G.windKts + " — bass'll sit on the protected side.",
+        G.windKts > 18 ? "Heavy wind — shorter casts, heavier presentation." : "Light wind — long casts and work the edges."
+      ];
+      const openers = [
+        "You're crowding my water, " + playerName() + ".",
+        playerName() + ", you're fishing like a tourist.",
+        "Alright " + playerName() + ", listen up.",
+        "I wouldn't say this to everyone, " + playerName() + ".",
+        "You want cows or selfies?",
+        "Stop burning my spot and try this."
+      ];
+      const bodies = [
+        () => spotName + " this " + timeWord + ". " + colName + " " + lure + ".",
+        () => "Slide to " + spotName + " and tie " + colName + " " + lure + ".",
+        () => spotName + " — " + colName + " " + lure + ". " + techs[lure],
+        () => "I'd hit " + spotName + " on a " + colName + " " + lure + " right now.",
+        () => colName + " " + lure + " at " + spotName + ". That's the play this " + timeWord + ".",
+        () => spotName + " is chewing. " + colName + " " + lure + ". " + rockTips[Math.floor(G.rng() * rockTips.length)],
+        () => windTips[Math.floor(G.rng() * windTips.length)] + " " + spotName + ". " + colName + " " + lure + ".",
+        () => techs[lure] + " " + spotName + ". " + colName + " " + lure + ".",
+        () => hole.s.rocky
+          ? spotName + " boulders — " + colName + " " + lure + ". " + rockTips[Math.floor(G.rng() * rockTips.length)]
+          : spotName + " beach — " + colName + " " + lure + ". Work the wash.",
+        () => G.tide === "FLOOD"
+          ? "Flood tide — " + spotName + ", " + colName + " " + lure + "."
+          : "Ebb's pulling — " + spotName + ", " + colName + " " + lure + "."
+      ];
+      const message = openers[Math.floor(G.rng() * openers.length)] + " " + bodies[Math.floor(G.rng() * bodies.length)]();
+      return { spot: hole.i, lure, color, message };
     }
     function startTalk() {
       if (!billHere() || G.travel || G.fish || G.talking) return;
       ensureAudio();
       G.talking = true;
-      G.talkFull = billTip();
+      const advice = rollBillAdvice();
+      G.pendingBillAdvice = advice;
+      G.talkFull = advice.message;
       G.talkShown = 0;
       G.talkT = 0;
       G.talkDone = false;
@@ -1151,6 +1225,10 @@
       G.talking = false;
       G.talkDone = false;
       log("Bill: " + G.talkFull, "good");
+      if (G.pendingBillAdvice) {
+        activateBillAdvice(G.pendingBillAdvice);
+        G.pendingBillAdvice = null;
+      }
       toast("BILL LEFT THE HOLE");
       billMove("talk");
       refreshSpotButtons();
@@ -1445,6 +1523,8 @@
       G.travel = null;
       G.ufo = null;
       G.alienSpot = -1;
+      G.billAdvice = null;
+      G.pendingBillAdvice = null;
       G.paused = false;
       G.talking = false;
       G.view = "map";
@@ -1505,6 +1585,7 @@
 
     /* ---------- fishing math ---------- */
     function biteChance(dt) {
+      if (followingBillAdvice()) return 1 - Math.pow(1 - BILL_TIP_BITE_CHANCE, dt);
       const spot = currentSpot();
       const tb = timeBucket(G.hour);
       const monthBase = { 4: 0.45, 5: 0.7, 6: 0.85, 7: 0.75, 8: 0.9, 9: 1.2, 10: 1.45, 11: 1.15 }[G.month];
@@ -2343,6 +2424,7 @@
         if (G.toastT <= 0) { G.toast = ""; $("toast").textContent = ""; $("toast").classList.remove("fish-on"); }
       }
       G.shake = Math.max(0, G.shake - dt);
+      updateBillAdvice();
       keys.spaceTap = false;
       keys.upTap = false;
       keys.downTap = false;
@@ -2367,10 +2449,23 @@
       const billLine = billHere()
         ? `<span style="color:#e8c547">MONTAUK BILL IS HERE — YOU CAN'T FISH THIS HOLE. TALK TO HIM.</span><br>`
         : (G.rival.spot >= 0 ? `BILL LAST SEEN · ${SPOTS[G.rival.spot].name}<br>` : "");
+      let billTipLine = "";
+      if (G.billAdvice && billAdviceRemaining() > 0) {
+        const a = G.billAdvice;
+        const colTip = COLORS.find((c) => c.id === a.color);
+        const left = Math.ceil(billAdviceRemaining());
+        if (followingBillAdvice()) {
+          billTipLine = `<span style="color:#6fbf73">BILL'S TIP HOT — 60% HOOK · ${left}s LEFT</span><br>`;
+        } else {
+          billTipLine =
+            `<span style="color:#e8c547">BILL TIP · ${SPOTS[a.spot].name} · ${colTip ? colTip.name : a.color.toUpperCase()} ${a.lure} · ${left}s</span><br>`;
+        }
+      }
       $("spot-info").innerHTML =
         `<b style="color:#efe6d0">${spot.name}</b><br>` +
         `${spot.side.toUpperCase()} SIDE · ${spot.rocky ? "BOULDER FIELD" : "SAND / COBBLE"}<br>` +
         billLine +
+        billTipLine +
         (G.storm.active && G.storm.rain === 2
           ? `<span style="color:#8ec5ff">DOWNPOUR — HOT BITE · LIGHTNING RISK</span><br>`
           : (G.storm.active && G.storm.rain === 1

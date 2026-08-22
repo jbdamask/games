@@ -733,6 +733,8 @@
     const BILL_TIP_DURATION = 60;
     const FISH_IDLE_JUMP_CHANCE = 0.20;
     const FISH_IDLE_EAT_SEC = 20;
+    const CURSE_DURATION = 3;
+    const CURSE_TEXT = "$#&@!!!";
     const ALIEN_MSG =
       "We come in peace. Please don't tell anybody, m'kay? Here are some 50 lb stripers to sweeten the deal.";
     const TRIP_GAME_HOURS = 6;
@@ -886,6 +888,7 @@
       particles: [],
       toast: "",
       toastT: 0,
+      curseT: 0,
       shake: 0,
       log: [],
       picky: {},
@@ -1961,6 +1964,7 @@
       G.fish = null;
       G.threat = null;
       G.lureIn = false;
+      G.curseT = CURSE_DURATION;
       jingle(false);
     }
 
@@ -2479,6 +2483,7 @@
         if (G.toastT <= 0) { G.toast = ""; $("toast").textContent = ""; $("toast").classList.remove("fish-on"); }
       }
       G.shake = Math.max(0, G.shake - dt);
+      if (G.curseT > 0) G.curseT = Math.max(0, G.curseT - dt);
       updateBillAdvice();
       keys.spaceTap = false;
       keys.upTap = false;
@@ -2694,6 +2699,14 @@
         pix(bctx, bx, 128, 18, 8, "#d8f0ee");
       }
       drawBill(bctx, bx, bob, 1, pose);
+      if (G.curseT > 0) {
+        const float = Math.sin(t * 16) * 2;
+        bctx.fillStyle = "#e25b4a";
+        bctx.font = "8px 'Press Start 2P', monospace";
+        bctx.textAlign = "center";
+        bctx.fillText(CURSE_TEXT, bx + 12, bob - 10 + float);
+        bctx.textAlign = "left";
+      }
 
       if (G.castWindup) {
         const pwr = calcCastPower(G.castChargeT);

@@ -709,7 +709,7 @@
       <h3>MONTAUK BILL</h3>
       <img id="talk-face" src="bill-closed.png" alt="Montauk Bill" width="420" height="524" />
       <div id="talk-text"></div>
-      <p class="talk-charity">Bill's charity: <a class="charity-link" href="https://kidsneedmore.org/" target="_blank" rel="noopener noreferrer">Kids Need More</a></p>
+      <p class="talk-charity">Montauk Bill's charity: <a class="charity-link" href="https://kidsneedmore.org/" target="_blank" rel="noopener noreferrer">Kids Need More</a></p>
       <p id="talk-cont" class="blink">PRESS SPACE / CLICK</p>
     </div>
   </div>
@@ -862,7 +862,7 @@
       catches: [],
       spotIndex: 18,
       travel: null,
-      bill: { x: 70, vx: 0, onRock: -1, splash: 0, frame: 0 },
+      player: { x: 70, vx: 0, onRock: -1, splash: 0, frame: 0 },
       camX: 0,
       waves: [],
       weed: [],
@@ -1076,7 +1076,7 @@
         G.lureIn = false;
         jingle(false);
       }
-      if (G.bill.onRock >= 0) fallOffRock("knock");
+      if (G.player.onRock >= 0) fallOffRock("knock");
       else if (G.lureIn) retrieve(false);
       s.proximity = Math.max(0.22, s.proximity * 0.55);
       s.warned = false;
@@ -1119,7 +1119,7 @@
       G.rival.spot = next;
       G.rival.nextMove = G.elapsedMin + 38 + G.rng() * 36;
       if (reason === "talk") log("Montauk Bill packed up — headed toward " + SPOTS[next].name, "warn");
-      else log("word on the beach: Bill's at " + SPOTS[next].name, "warn");
+      else log("word on the beach: Montauk Bill's at " + SPOTS[next].name, "warn");
       refreshSpotButtons();
     }
     function billCatch() {
@@ -1166,7 +1166,7 @@
     function updateBillAdvice() {
       if (!G.billAdvice) return;
       if (billAdviceRemaining() <= 0) {
-        log("Bill's hot tip cooled off", "");
+        log("Montauk Bill's hot tip cooled off", "");
         G.billAdvice = null;
       }
     }
@@ -1179,7 +1179,7 @@
       };
       const col = COLORS.find((c) => c.id === advice.color);
       log(
-        "Bill's tip: " + SPOTS[advice.spot].name + " · " + (col ? col.name : advice.color.toUpperCase()) + " " + advice.lure +
+        "Montauk Bill's tip: " + SPOTS[advice.spot].name + " · " + (col ? col.name : advice.color.toUpperCase()) + " " + advice.lure +
         " — 60% hook chance for " + BILL_TIP_DURATION + "s if you match it",
         "good"
       );
@@ -1268,12 +1268,12 @@
       $("talk-face").src = TALK_CLOSED;
       G.talking = false;
       G.talkDone = false;
-      log("Bill: " + G.talkFull, "good");
+      log("Montauk Bill: " + G.talkFull, "good");
       if (G.pendingBillAdvice) {
         activateBillAdvice(G.pendingBillAdvice);
         G.pendingBillAdvice = null;
       }
-      toast("BILL LEFT THE HOLE");
+      toast("MONTAUK BILL LEFT THE HOLE");
       billMove("talk");
       refreshSpotButtons();
     }
@@ -1503,14 +1503,14 @@
     }
 
     function surfCamTarget() {
-      const bill = G.bill;
-      if (bill.onRock >= 0) return bill.onRock * 42 + 18;
-      if (bill.x > 150) return clamp((bill.x - 150) * 0.62, 0, 88);
+      const player = G.player;
+      if (player.onRock >= 0) return player.onRock * 42 + 18;
+      if (player.x > 150) return clamp((player.x - 150) * 0.62, 0, 88);
       return 0;
     }
 
-    function resetBill() {
-      G.bill = { x: 78, vx: 0, onRock: -1, splash: 0, frame: 0 };
+    function resetPlayer() {
+      G.player = { x: 78, vx: 0, onRock: -1, splash: 0, frame: 0 };
       G.camX = 0;
       G.lureIn = false;
       G.lureWeed = false;
@@ -1578,7 +1578,7 @@
       G.rival = { spot: -1, score: 0, landed: 0, biggest: 0, nextMove: 42, nextCatch: 18, talks: 0 };
       rollWeather();
       rebuildPicky();
-      resetBill();
+      resetPlayer();
       G.rival.spot = pickBillSpot(-1);
       log("Welcome " + playerName() + ". Can you outfish Montauk Bill?", "good");
       log(playerName() + " hits the rocks. Wind " + G.windDir + " " + G.windKts + ".");
@@ -1638,8 +1638,8 @@
       else if (tb === "night") timeMul = (G.month >= 5 && G.month !== 8) ? 1.25 : 0.85;
       else timeMul = 0.75;
       let rockMul = 1;
-      if (G.bill.onRock >= 0) rockMul = G.boulders[G.bill.onRock].quality;
-      else if (G.bill.x > 140) rockMul = 0.85;
+      if (G.player.onRock >= 0) rockMul = G.boulders[G.player.onRock].quality;
+      else if (G.player.x > 140) rockMul = 0.85;
       const pref = G.picky[G.spotIndex + ":" + tb];
       let lureMul = 1;
       if (pref && pref.picky) {
@@ -1671,7 +1671,7 @@
       const tb = timeBucket(G.hour);
       if (G.alienSpot === G.spotIndex && G.rng() < ALIEN_BASS_CATCH_CHANCE) return ALIEN_BASS_INCH;
       let cow = 0.08 + (G.month >= 9 ? 0.12 : 0);
-      if (G.bill.onRock === 2) cow += 0.08;
+      if (G.player.onRock === 2) cow += 0.08;
       if (tb === "night") cow += 0.04;
       const r = G.rng();
       if (r < 0.48) return irand(16, 24);
@@ -1703,24 +1703,24 @@
     }
 
     function castBaseReach() {
-      return 40 + (G.bill.onRock + 1) * 18 + (LURE_CAST[G.lure] || 0);
+      return 40 + (G.player.onRock + 1) * 18 + (LURE_CAST[G.lure] || 0);
     }
 
     function castLanding(power, aimH, aimV) {
-      const bill = G.bill;
+      const player = G.player;
       const powerReach = castBaseReach() * (0.3 + power * 0.7);
       const lateral = aimH * 34;
       const depthShift = (aimV - 0.5) * 44;
-      const x = clamp(bill.x + 18 + powerReach + lateral + depthShift * 0.35, bill.x + 26, 392);
+      const x = clamp(player.x + 18 + powerReach + lateral + depthShift * 0.35, player.x + 26, 392);
       const y = clamp(lureDefaultY(G.lure) + depthShift + lateral * 0.12, 108, 148);
       return { x, y };
     }
 
     function canCastWindup() {
       if (G.mode !== "game" || G.view !== "surf" || G.paused || G.talking || G.ufo) return false;
-      if (G.bill.splash > 0 || G.travel || G.fish || G.lureIn) return false;
-      const near = boulderAt(G.bill.x);
-      if (G.bill.onRock < 0 && near >= 0 && G.bill.x > 150) return false;
+      if (G.player.splash > 0 || G.travel || G.fish || G.lureIn) return false;
+      const near = boulderAt(G.player.x);
+      if (G.player.onRock < 0 && near >= 0 && G.player.x > 150) return false;
       if ((G.box[G.lure] || 0) <= 0 && !tieNextLure()) return false;
       return (G.box[G.lure] || 0) > 0;
     }
@@ -1742,7 +1742,7 @@
       if (!G.castWindup) return;
       const power = calcCastPower(G.castChargeT);
       cancelCastWindup();
-      if (G.bill.splash > 0 || G.travel) return;
+      if (G.player.splash > 0 || G.travel) return;
       if (G.fish) return;
       if (G.lureIn) return;
       if ((G.box[G.lure] || 0) <= 0 && !tieNextLure()) return;
@@ -1793,7 +1793,7 @@
         idleReelT: 0
       };
       G.threat = null;
-      const deep = currentSpot().q > 1.15 || G.bill.onRock >= 1;
+      const deep = currentSpot().q > 1.15 || G.player.onRock >= 1;
       const stealChance = (inch >= 28 ? 0.11 : 0.04) + (deep ? 0.05 : 0);
       if (G.rng() < stealChance) {
         G.threat = {
@@ -1845,7 +1845,7 @@
       G.ufo = { phase: "in", t: 0, said: false };
       if (G.view !== "surf") {
         G.view = "surf";
-        resetBill();
+        resetPlayer();
       }
       log("A DISC SETTLES OVER " + currentSpot().name.toUpperCase(), "good");
       toast("VISITORS FROM OUT THERE");
@@ -1941,7 +1941,7 @@
       G.lureIn = false;
       jingle(true);
       for (let i = 0; i < 14; i++) {
-        G.particles.push({ x: G.bill.x + 10, y: 120, vx: rand(-40, 40), vy: rand(-80, -20), life: 0.6, c: "#c9ece8" });
+        G.particles.push({ x: G.player.x + 10, y: 120, vx: rand(-40, 40), vy: rand(-80, -20), life: 0.6, c: "#c9ece8" });
       }
     }
 
@@ -1956,7 +1956,7 @@
         log("popped the leader", "bad");
       } else if (why === "wave") {
         toast("KNOCKED OFF — FISH GONE");
-        log("wave dumped Bill — lost the fish", "bad");
+        log("wave dumped " + playerName() + " — lost the fish", "bad");
       } else if (why === "jump") {
         toast("FISH SPIT THE HOOK");
         log("bass shook the hook — keep pumping", "bad");
@@ -1998,17 +1998,17 @@
     }
 
     function fallOffRock(kind) {
-      const bill = G.bill;
-      bill.onRock = -1;
+      const player = G.player;
+      player.onRock = -1;
       if (kind === "knock") {
-        bill.splash = 1.2;
-        bill.x = Math.max(90, bill.x - 36);
+        player.splash = 1.2;
+        player.x = Math.max(90, player.x - 36);
         G.shake = 0.45;
         beep(90, 0.2, "sawtooth", 0.06);
         toast("KNOCKED OFF");
       } else {
-        bill.splash = 0.9;
-        bill.x = Math.max(86, bill.x - 14);
+        player.splash = 0.9;
+        player.x = Math.max(86, player.x - 14);
         G.shake = 0.28;
         toast("WASHED OFF");
         beep(90, 0.16, "sawtooth", 0.05);
@@ -2023,19 +2023,19 @@
     }
 
     function shoveFromRock(power, dt) {
-      const bill = G.bill;
-      const b = G.boulders[bill.onRock];
+      const player = G.player;
+      const b = G.boulders[player.onRock];
       if (!b) return;
-      bill.x -= power * 22 * dt;
+      player.x -= power * 22 * dt;
       const minX = b.x - 6;
       const maxX = b.x + b.w + 2;
-      if (bill.x < minX) {
+      if (player.x < minX) {
         fallOffRock("wash");
         return;
       }
-      bill.x = clamp(bill.x, minX, maxX);
-      const seaward = bill.x > b.x + b.w * 0.52;
-      const tooFarBack = bill.x < b.x + b.w * 0.34;
+      player.x = clamp(player.x, minX, maxX);
+      const seaward = player.x > b.x + b.w * 0.52;
+      const tooFarBack = player.x < b.x + b.w * 0.34;
       const pointy = b.peak === "point";
       if (tooFarBack) {
         const need = pointy ? 1.25 : 1.55;
@@ -2052,7 +2052,7 @@
       G.waves.push({ x: 330, power, w: 28 + power * 9, life: 1 });
     }
 
-    function updateLureWork(dt, bill, spot) {
+    function updateLureWork(dt, player, spot) {
       const rocky = spot.rocky;
       G.lastLift += dt;
       G.lureShake = Math.max(0, G.lureShake - dt * 1.7);
@@ -2219,52 +2219,52 @@
       }
       G.techHint = G.lureWeed ? "FOULED IN WEED" : hint;
 
-      if (G.lureX <= bill.x + 22) retrieve(false);
+      if (G.lureX <= player.x + 22) retrieve(false);
     }
 
     function updateSurf(dt) {
       if (G.ufo) return;
       const spot = currentSpot();
-      const bill = G.bill;
-      bill.frame += dt * (keys.left || keys.right || keys.up || keys.down ? 8 : 2);
-      if (bill.splash > 0) {
-        bill.splash -= dt;
-        bill.x = lerp(bill.x, 86, dt * 1.4);
+      const player = G.player;
+      player.frame += dt * (keys.left || keys.right || keys.up || keys.down ? 8 : 2);
+      if (player.splash > 0) {
+        player.splash -= dt;
+        player.x = lerp(player.x, 86, dt * 1.4);
         return;
       }
 
       const working = G.lureIn || !!G.fish || G.castWindup;
-      const inWater = bill.x > 128 && bill.onRock < 0;
+      const inWater = player.x > 128 && player.onRock < 0;
       const speed = inWater ? 38 : 70;
       if (!G.castWindup) {
-        if (keys.right) bill.x += speed * dt;
-        if (keys.left) bill.x -= speed * dt;
-        if (keys.up && bill.onRock < 0 && !working) bill.x += speed * 0.7 * dt;
+        if (keys.right) player.x += speed * dt;
+        if (keys.left) player.x -= speed * dt;
+        if (keys.up && player.onRock < 0 && !working) player.x += speed * 0.7 * dt;
         if (keys.down && !G.lureIn) {
-          if (bill.onRock >= 0) {
-            bill.onRock = -1;
-            bill.x -= 8;
-          } else bill.x -= speed * 0.8 * dt;
+          if (player.onRock >= 0) {
+            player.onRock = -1;
+            player.x -= 8;
+          } else player.x -= speed * 0.8 * dt;
         }
       }
-      if (bill.onRock >= 0) {
-        const b = G.boulders[bill.onRock];
-        bill.x = clamp(bill.x, b.x - 4, b.x + b.w + 2);
+      if (player.onRock >= 0) {
+        const b = G.boulders[player.onRock];
+        player.x = clamp(player.x, b.x - 4, b.x + b.w + 2);
       } else {
-        bill.x = clamp(bill.x, 36, 292);
+        player.x = clamp(player.x, 36, 292);
       }
       G.camX = lerp(G.camX || 0, surfCamTarget(), dt * 5);
 
       if (keys.spaceTap) {
-        const near = boulderAt(bill.x);
+        const near = boulderAt(player.x);
         if (G.fish) {
           G.fish.idleReelT = 0;
         } else if (G.lureIn) {
           /* retrieve handled in updateLureWork */
-        } else if (bill.onRock < 0 && near >= 0 && bill.x > 150) {
+        } else if (player.onRock < 0 && near >= 0 && player.x > 150) {
           cancelCastWindup();
-          bill.onRock = near;
-          bill.x = G.boulders[near].x + 4;
+          player.onRock = near;
+          player.x = G.boulders[near].x + 4;
           beep(300, 0.08);
           log("climbed a " + (G.boulders[near].peak === "point" ? "pointy" : "slab") + " boulder at " + spot.name);
         }
@@ -2285,14 +2285,14 @@
         const w = G.waves[i];
         w.x -= (55 + w.power * 25) * dt;
         if (w.x < 70) G.waves.splice(i, 1);
-        const hit = bill.x > w.x - 8 && bill.x < w.x + w.w;
+        const hit = player.x > w.x - 8 && player.x < w.x + w.w;
         if (!hit) continue;
-        if (bill.onRock >= 0) {
+        if (player.onRock >= 0) {
           shoveFromRock(w.power, dt);
-        } else if (bill.x > 130) {
-          bill.x -= w.power * 48 * dt;
-          if (w.power > 2.8 && bill.x > 210 && G.rng() < dt * 0.8) {
-            bill.splash = 0.55;
+        } else if (player.x > 130) {
+          player.x -= w.power * 48 * dt;
+          if (w.power > 2.8 && player.x > 210 && G.rng() < dt * 0.8) {
+            player.splash = 0.55;
             G.shake = 0.18;
           }
         }
@@ -2306,7 +2306,7 @@
 
       if (G.lureIn && !G.fish) {
         G.wait += dt;
-        updateLureWork(dt, bill, spot);
+        updateLureWork(dt, player, spot);
         updateFishProbe(dt);
         if (!G.lureIn) {
           /* reeled in or lost */
@@ -2344,14 +2344,14 @@
           f.tension += Math.sin(f.fight * 3.2) * 5 * dt * inch * 0.035;
           f.tension = clamp(f.tension, 0, 110);
           f.land = clamp(f.land, 0, 100);
-          const homeX = bill.x + 36 + (100 - f.land) * 0.9;
+          const homeX = player.x + 36 + (100 - f.land) * 0.9;
           const homeY = f.hookY + (100 - f.land) * 0.08;
           const run = pumping ? 0.35 : 1;
           const pullX = Math.sin(f.fight * 2.6 + f.runPhase) * (10 + inch * 0.18) * run;
           const pullY = Math.cos(f.fight * 3.4 + f.runPhase * 0.7) * (5 + inch * 0.07) * run;
           G.lureX = lerp(G.lureX, homeX + pullX, dt * (pumping ? 2.4 : 1.15));
           G.lureY = lerp(G.lureY, homeY + pullY, dt * (pumping ? 2.1 : 1.05));
-          G.lureX = clamp(G.lureX, bill.x + 28, 392);
+          G.lureX = clamp(G.lureX, player.x + 28, 392);
           G.lureY = clamp(G.lureY, 108, 148);
           if (f.tension >= 100) loseFish("snap");
           else if (f.land >= 100) landFish();
@@ -2453,7 +2453,7 @@
           G.elapsedMin += G.travel.mins;
           G.hour = G.startHour + G.elapsedMin / 60;
           G.spotIndex = G.travel.path[G.travel.path.length - 1];
-          resetBill();
+          resetPlayer();
           if (G.storm.active) {
             rollSpotRain();
             G.storm.proximity = Math.max(0.05, G.storm.proximity * 0.72);
@@ -2503,22 +2503,22 @@
       const spot = currentSpot();
       const col = COLORS.find((c) => c.id === G.color);
       const wx = rainLabel();
-      $("hud-left").textContent = `${playerName()}  ${G.score}   BILL ${G.rival.score}`;
+      $("hud-left").textContent = `${playerName()}  ${G.score}   M. BILL ${G.rival.score}`;
       $("hud-center").textContent = `${clockString(G.hour)}   ${timeBucket(G.hour).toUpperCase()}   LEFT ${remaining()}`;
       $("hud-right").textContent = `WIND ${G.windDir} ${G.windKts}   ${G.tide}${wx ? "   " + wx : ""}`;
       const billLine = billHere()
         ? `<span style="color:#e8c547">MONTAUK BILL IS HERE — YOU CAN'T FISH THIS HOLE. TALK TO HIM.</span><br>`
-        : (G.rival.spot >= 0 ? `BILL LAST SEEN · ${SPOTS[G.rival.spot].name}<br>` : "");
+        : (G.rival.spot >= 0 ? `MONTAUK BILL LAST SEEN · ${SPOTS[G.rival.spot].name}<br>` : "");
       let billTipLine = "";
       if (G.billAdvice && billAdviceRemaining() > 0) {
         const a = G.billAdvice;
         const colTip = COLORS.find((c) => c.id === a.color);
         const left = Math.ceil(billAdviceRemaining());
         if (followingBillAdvice()) {
-          billTipLine = `<span style="color:#6fbf73">BILL'S TIP HOT — 60% HOOK · ${left}s LEFT</span><br>`;
+          billTipLine = `<span style="color:#6fbf73">MONTAUK BILL'S TIP HOT — 60% HOOK · ${left}s LEFT</span><br>`;
         } else {
           billTipLine =
-            `<span style="color:#e8c547">BILL TIP · ${SPOTS[a.spot].name} · ${colTip ? colTip.name : a.color.toUpperCase()} ${a.lure} · ${left}s</span><br>`;
+            `<span style="color:#e8c547">MONTAUK BILL TIP · ${SPOTS[a.spot].name} · ${colTip ? colTip.name : a.color.toUpperCase()} ${a.lure} · ${left}s</span><br>`;
         }
       }
       $("spot-info").innerHTML =
@@ -2549,7 +2549,7 @@
       ctx.fillRect(x | 0, y | 0, w, h);
     }
 
-    function drawBill(ctx, x, y, scale, pose) {
+    function drawAngler(ctx, x, y, scale, pose) {
       const s = scale;
       const skin = "#e0b090";
       const hat = "#2c4a3e";
@@ -2693,12 +2693,12 @@
       pix(bctx, 110, 138, 40, 16, "#8aa8a0");
 
       const pose = G.fish ? "fight" : (G.lureIn || G.castWindup) ? "cast" : "idle";
-      const bob = G.bill.onRock >= 0 ? 124 - G.boulders[G.bill.onRock].h - 24 : (G.bill.x > 128 ? 118 + Math.sin(t * 6) * 2 : 128);
-      const bx = G.bill.x;
-      if (G.bill.splash > 0) {
+      const bob = G.player.onRock >= 0 ? 124 - G.boulders[G.player.onRock].h - 24 : (G.player.x > 128 ? 118 + Math.sin(t * 6) * 2 : 128);
+      const bx = G.player.x;
+      if (G.player.splash > 0) {
         pix(bctx, bx, 128, 18, 8, "#d8f0ee");
       }
-      drawBill(bctx, bx, bob, 1, pose);
+      drawAngler(bctx, bx, bob, 1, pose);
       if (G.curseT > 0) {
         const float = Math.sin(t * 16) * 2;
         bctx.fillStyle = "#e25b4a";
@@ -2863,7 +2863,7 @@
       });
       updateMapTooltip({ scale, dw, dh, ox, oy, w: viewCss().w, h: viewCss().h });
       const s = SPOTS[G.spotIndex];
-      drawBill(vctx, ox + s.x * scale - 8, oy + s.y * scale - 28, 1.1, "idle");
+      drawAngler(vctx, ox + s.x * scale - 8, oy + s.y * scale - 28, 1.1, "idle");
       if (G.ufo) {
         const sx = ox + s.x * scale;
         let sy = oy + s.y * scale - 52;
@@ -3071,7 +3071,7 @@
       }
       if (G.view !== "surf") {
         G.view = "surf";
-        resetBill();
+        resetPlayer();
         tryUfoEncounter();
         if (G.storm.active) {
           rollSpotRain();
